@@ -16,9 +16,7 @@
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="font-dotgothic.woff2" as="font" type="font/woff2" crossorigin>
 
   <link rel="stylesheet" href="style-base.css">
   <link rel="stylesheet" href="style-ui.css">
@@ -68,6 +66,8 @@
   <!-- Engine -->
   <script src="core.js"></script>
   <script src="gfx.js"></script>
+  <script src="pix.js"></script>
+  <script src="art.js"></script>
   <script src="font.js"></script>
   <script src="input.js"></script>
   <script src="audio.js"></script>
@@ -77,9 +77,13 @@
 
   <!-- Art -->
   <script src="sprites-chars.js"></script>
+  <script src="sprites-battle.js"></script>
   <script src="sprites-mobs.js"></script>
   <script src="tiles.js"></script>
   <script src="sky.js"></script>
+  <script src="terrain.js"></script>
+  <script src="backdrops.js"></script>
+  <script src="mode7.js"></script>
 
   <!-- Game data -->
   <script src="data-party.js"></script>
@@ -96,6 +100,7 @@
   <!-- Systems & scenes -->
   <script src="script.js"></script>
   <script src="world.js"></script>
+  <script src="fx.js"></script>
   <script src="battle.js"></script>
   <script src="battle-ui.js"></script>
   <script src="menu.js"></script>

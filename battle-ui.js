@@ -1,7 +1,8 @@
 /* =========================================================================
-   battle-ui.js — the DOM side of battle: Flow meter, message line,
-   party panel, command menus, target picking (tap sprites or the list),
-   victory results and the game-over screen.
+   battle-ui.js — the DOM side of battle, laid out like the SNES classics:
+   a message window on top, enemy names bottom-left, the party's HP/MP
+   bottom-right, and a command window that opens over the enemy list.
+   Tap commands, names or the sprites themselves.
    ========================================================================= */
 (function () {
   'use strict';
@@ -18,15 +19,19 @@
         <div class="b-top"><div class="b-flow"></div></div>
         <div class="b-msg win hidden"></div>
         <div class="b-panel">
-          <div class="b-party win"></div>
-          <div class="b-cmd win">
-            <div class="b-desc"></div>
-            <div class="b-list scroll"></div>
-            <button class="b-back tap hidden">◀ Back</button>
+          <div class="b-upper">
+            <div class="b-enemies win"></div>
+            <div class="b-cmd win hidden">
+              <div class="b-head"><b></b><span class="b-sub"></span></div>
+              <div class="b-desc"></div>
+              <div class="b-list scroll"></div>
+              <button class="b-back tap hidden">Back</button>
+            </div>
           </div>
+          <div class="b-party win"></div>
         </div>`;
       root.addEventListener('pointerdown', () => { if (skipWait) skipWait(); });
-      $('.b-back', root).addEventListener('click', (e) => { e.stopPropagation(); const l = $('.b-list', root); l._cancel && l._cancel(); });
+      G.ui.onTap($('.b-back', root), (e) => { e.stopPropagation(); const l = $('.b-list', root); l._cancel && l._cancel(); });
       ui.refresh();
     },
 
@@ -40,19 +45,28 @@
 
     refresh() {
       if (!root || !b) return;
-      $('.b-flow', root).innerHTML = G.ui.flowHTML(b.st.flow, true);
-      const rows = b.party.map((c) => {
-        const st = Object.keys(c.status).map((k) => `<span class="st ${G.STATUSES[k].good ? 'good' : ''}" title="${G.STATUSES[k].name}">${G.STATUSES[k].icon}</span>`).join('');
-        return `<div class="p-row ${b.active === c ? 'active' : ''} ${c.alive ? '' : 'ko'}">
+      $('.b-flow', root).innerHTML = G.ui.flowHTML(b.st.flow, false);
+      $('.b-party', root).innerHTML = b.party.map((c) => {
+        const st = Object.keys(c.status).map((k) => `<span class="st ${G.STATUSES[k].good ? 'good' : ''}">${G.STATUSES[k].icon}</span>`).join('');
+        const low = c.alive && c.hp <= c.maxhp * 0.25;
+        return `<div class="p-row ${b.active === c ? 'active' : ''} ${c.alive ? '' : 'ko'} ${low ? 'low' : ''}">
+          <span class="hand"></span>
           <span class="p-name">${U.esc(c.name)}${st}</span>
-          <span class="p-hp"><small>HP</small> ${c.hp}<small>/${c.maxhp}</small>${G.ui.bar(c.hp, c.maxhp, 'hp')}</span>
-          <span class="p-mp"><small>MP</small> ${c.mp}${G.ui.bar(c.mp, c.maxmp, 'mp')}</span>
+          <span class="p-hp"><small>HP</small><span class="cur">${c.hp}</span><span class="max">/${String(c.maxhp).padStart(3, ' ')}</span></span>
+          <span class="p-mp"><small>MP</small>${c.mp}</span>
         </div>`;
       }).join('');
-      $('.b-party', root).innerHTML = rows;
+      // enemy names, grouped like "Rift Wisp  2"
+      const groups = [];
+      for (const e of b.enemies) {
+        if (!e.alive) continue;
+        const g = groups.find((x) => x.name === e.data.name);
+        if (g) g.n++; else groups.push({ name: e.data.name, n: 1, boss: e.data.boss });
+      }
+      $('.b-enemies', root).innerHTML = groups.map((g) => `<div class="en ${g.boss ? 'boss' : ''}"><span>${U.esc(g.name)}</span>${g.n > 1 ? `<small>${g.n}</small>` : ''}</div>`).join('');
     },
 
-    /* message line; resolves after ms or when the player taps */
+    /* message window; resolves after ms or when the player taps */
     msg(text, ms = 800) {
       const m = $('.b-msg', root);
       if (!m) return U.sleep(ms);
@@ -65,14 +79,25 @@
         skipWait = () => { if (performance.now() - t0 > 120) done(); };
       });
     },
+    /* the skill's name in a little window at the top of the field */
+    spell(name, color, bright) {
+      if (!root) return;
+      ui.hideMsg();
+      const el = U.el('div', 'b-spell' + (bright ? ' bright' : ''), `<span class="win">${U.esc(name)}</span>`);
+      root.appendChild(el);
+      setTimeout(() => el.remove(), 1300);
+    },
     hideMsg() { const m = $('.b-msg', root); if (m) m.classList.add('hidden'); },
-    tip(text) { return G.ui.say({ name: '✦ How the Current works' }, text); },
+    tip(text) { return G.ui.say({ name: '◆ How the Current works' }, text); },
 
     setDesc(html) { $('.b-desc', root).innerHTML = html || ''; },
+    setHead(name, sub) { $('.b-head b', root).textContent = name || ''; $('.b-sub', root).innerHTML = sub || ''; },
+    openCmd(open) { $('.b-cmd', root).classList.toggle('hidden', !open); },
 
     async listIn(items, opts = {}) {
       const list = $('.b-list', root);
       const back = $('.b-back', root);
+      ui.openCmd(true);
       back.classList.toggle('hidden', opts.cancel === undefined);
       const v = await G.ui.list(list, items, opts);
       back.classList.add('hidden');
@@ -84,28 +109,33 @@
       b = battle;
       ui.hideMsg();
       const boss = b.enemies.some((e) => e.data.boss);
-      for (;;) {
-        ui.setDesc(`<b>${U.esc(actor.name)}</b> — what will you do?`);
-        const atkName = (actor.data.attackFlagged && b.st.flags[actor.data.attackFlagged.flag] ? actor.data.attackFlagged : actor.data.attack).name;
-        const cmd = await ui.listIn([
-          { label: '⚔ ' + atkName, value: 'attack', right: '<span class="flowtag">+1</span>' },
-          { label: '✦ Skills', value: 'skills' },
-          { label: '◈ Items', value: 'items', disabled: !usableItems().length },
-          { label: '◆ Guard', value: 'guard', right: '<span class="flowtag">+1</span>' },
-          { label: '➜ Flee', value: 'flee', disabled: boss || b.opts.noFlee },
-        ], { cols: 2 });
-        if (cmd === 'attack') {
-          const t = await ui.pickTarget(b.enemies.filter((e) => e.alive));
-          if (t) return { type: 'attack', target: t };
-        } else if (cmd === 'guard') return { type: 'guard' };
-        else if (cmd === 'flee') return { type: 'flee' };
-        else if (cmd === 'skills') {
-          const r = await ui.skillMenu(actor);
-          if (r) return r;
-        } else if (cmd === 'items') {
-          const r = await ui.itemMenu(actor);
-          if (r) return r;
+      try {
+        for (;;) {
+          ui.setHead(actor.name, `<span class="mpc">MP ${actor.mp}</span>`);
+          ui.setDesc('');
+          const atkName = (actor.data.attackFlagged && b.st.flags[actor.data.attackFlagged.flag] ? actor.data.attackFlagged : actor.data.attack).name;
+          const cmd = await ui.listIn([
+            { label: 'Attack', value: 'attack', right: '<span class="flowtag">+1</span>' },
+            { label: 'Skills', value: 'skills' },
+            { label: 'Items', value: 'items', disabled: !usableItems().length },
+            { label: 'Guard', value: 'guard', right: '<span class="flowtag">+1</span>' },
+            { label: 'Flee', value: 'flee', disabled: boss || b.opts.noFlee },
+          ], { cols: 2, onFocus: (it) => ui.setDesc(it.value === 'attack' ? U.esc(atkName) + ' — builds Flow.' : it.value === 'guard' ? 'Halve damage until your next turn and gather Flow.' : it.value === 'skills' ? 'Spend MP and Flow.' : it.value === 'items' ? 'Use something from the satchel.' : 'Try to escape.') });
+          if (cmd === 'attack') {
+            const t = await ui.pickTarget(b.enemies.filter((e) => e.alive));
+            if (t) return { type: 'attack', target: t };
+          } else if (cmd === 'guard') return { type: 'guard' };
+          else if (cmd === 'flee') return { type: 'flee' };
+          else if (cmd === 'skills') {
+            const r = await ui.skillMenu(actor);
+            if (r) return r;
+          } else if (cmd === 'items') {
+            const r = await ui.itemMenu(actor);
+            if (r) return r;
+          }
         }
+      } finally {
+        ui.openCmd(false);
       }
     },
 
@@ -116,13 +146,14 @@
         const over = flow < 10 && sk.flow > flow && !sk.noSurge;
         return {
           label: sk.name, value: sk, disabled: actor.mp < sk.mp, cls: over ? 'overdraw' : '',
-          right: `<span class="mpc">${sk.mp}MP</span> <span class="flowtag ${over ? 'warn' : ''}">◆${sk.flow}</span>`,
+          right: `<span class="mpc">${sk.mp}</span> <span class="flowtag ${over ? 'warn' : ''}">◆${sk.flow}</span>`,
         };
       });
       for (;;) {
+        ui.setHead('Skills', `<span class="mpc">MP ${actor.mp}</span> <span class="flowtag">◆${flow}</span>`);
         const sk = await ui.listIn(items, {
           cancel: null,
-          onFocus: (it) => ui.setDesc(`<b>${U.esc(it.value.name)}</b> — ${U.esc(it.value.desc)}${it.cls ? ' <span class="warn">Overdraw: will cause a Surge!</span>' : flow >= 10 ? ' <span class="glow">Bright: +25% power!</span>' : ''}`),
+          onFocus: (it) => ui.setDesc(`${U.esc(it.value.desc)}${it.cls ? ' <span class="warn">Overdraw: causes a Surge!</span>' : flow >= 10 ? ' <span class="glow">Bright: +25%!</span>' : ''}`),
         });
         if (!sk) return null;
         if (flow < 10 && sk.flow > flow && !sk.noSurge) {
@@ -141,6 +172,7 @@
 
     async itemMenu(actor) {
       for (;;) {
+        ui.setHead('Items', '');
         const its = usableItems();
         const id = await ui.listIn(its.map((id) => ({ label: G.data.items[id].name, value: id, right: '×' + G.game.count(id) })), {
           cancel: null, onFocus: (it) => ui.setDesc(U.esc(G.data.items[it.value].desc)),
@@ -164,10 +196,11 @@
       const onTap = (e) => {
         const p = G.gfx.toGame(e.clientX, e.clientY);
         const i = cands.findIndex((c) => Math.abs(p.x - c.x) < Math.max(14, c.w / 2) && Math.abs(p.y - c.y) < Math.max(14, c.h / 2));
-        if (i >= 0) { const btn = list.children[i]; btn && btn.click(); }
+        if (i >= 0) { const btn = list.children[i]; btn && btn.tap && btn.tap(); }
       };
       canvas.addEventListener('pointerdown', onTap);
-      ui.setDesc('Choose a target — tap it or pick a name.');
+      ui.setHead('Target', '');
+      ui.setDesc('Tap a target, or choose a name.');
       const t = await ui.listIn(cands.map((c) => ({
         label: U.esc(c.name), value: c, right: c.side === 'party' ? `${c.hp}/${c.maxhp}` : '',
       })), { cancel: null, onFocus: (it) => (b.cursor = it.value) });
@@ -179,16 +212,16 @@
     results({ exp, gold, drops, level }) {
       return new Promise((resolve) => {
         const w = U.el('div', 'b-results win');
-        let html = `<h3>Victory!</h3><p><b>${exp}</b> EXP · <b>${gold}</b> gold</p>`;
-        if (drops.length) html += `<p>Found: ${drops.map(U.esc).join(', ')}</p>`;
+        let html = `<h3>Victory</h3><p>Gained <b>${exp}</b> EXP.</p><p>Found <b>${gold}</b> gold.</p>`;
+        if (drops.length) html += `<p>Obtained ${drops.map((d) => '<b>' + U.esc(d) + '</b>').join(', ')}.</p>`;
         for (const l of level) {
           const nm = G.data.chars[l.m.id].short;
-          if (l.learned) html += `<p class="lvl">✦ ${nm} learned <b>${U.esc(l.learned)}</b>!</p>`;
-          else html += `<p class="lvl">▲ ${nm} reached <b>Lv ${l.lvl}</b> <small>${l.gains.join(' ')}</small></p>`;
+          if (l.learned) html += `<p class="lvl">${nm} learned <b>${U.esc(l.learned)}</b>!</p>`;
+          else html += `<p class="lvl">${nm} is now level <b>${l.lvl}</b>! <small>${l.gains.join(' ')}</small></p>`;
         }
-        html += '<p class="tapnext">Tap to continue ▼</p>';
+        html += '<p class="tapnext">Tap to continue</p>';
         w.innerHTML = html;
-        root.appendChild(w);
+        $('.b-upper', root).appendChild(w);
         if (level.length) setTimeout(() => G.audio.sfx('levelup'), 400);
         ui.hideMsg();
         let armed = false;
@@ -211,9 +244,9 @@
       root.appendChild(w);
       await U.sleep(600);
       const v = await G.ui.list($('.go-list', w), [
-        { label: '↻ Try the battle again', value: 'retry' },
-        { label: '⌂ Load last save', value: 'load' },
-        { label: '✕ Return to title', value: 'title' },
+        { label: 'Try the battle again', value: 'retry' },
+        { label: 'Load last save', value: 'load' },
+        { label: 'Return to title', value: 'title' },
       ]);
       w.remove();
       return v;

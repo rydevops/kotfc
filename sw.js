@@ -1,14 +1,15 @@
 /* sw.js — offline support. Network first (so updates on GitHub Pages show
    up right away), falling back to the cache when offline.
    Bump CACHE when you release a new version. */
-const CACHE = 'fading-current-v1';
+const CACHE = 'fading-current-v3';
 const FILES = [
   './', 'index.html', 'style-base.css', 'style-ui.css', 'style-battle.css',
-  'core.js', 'gfx.js', 'font.js', 'input.js', 'audio.js', 'music.js', 'ui.js', 'state.js',
-  'sprites-chars.js', 'sprites-mobs.js', 'tiles.js', 'sky.js',
+  'font-dotgothic.woff2',
+  'core.js', 'gfx.js', 'pix.js', 'art.js', 'font.js', 'input.js', 'audio.js', 'music.js', 'ui.js', 'state.js',
+  'sprites-chars.js', 'sprites-battle.js', 'sprites-mobs.js', 'tiles.js', 'sky.js', 'terrain.js', 'backdrops.js', 'mode7.js',
   'data-party.js', 'data-items.js', 'data-mobs.js', 'data-shops.js',
   'map-ferry.js', 'map-harbor.js', 'map-conservatory.js', 'map-study.js', 'map-vault.js', 'story-act1.js',
-  'script.js', 'world.js', 'battle.js', 'battle-ui.js', 'menu.js',
+  'script.js', 'world.js', 'fx.js', 'battle.js', 'battle-ui.js', 'menu.js',
   'scene-boot.js', 'scene-intro.js', 'scene-title.js', 'scene-slots.js', 'scene-actend.js', 'main.js',
   'manifest.json', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
 ];

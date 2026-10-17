@@ -106,7 +106,7 @@
     lights: [{ x: 16, y: 4, r: 54, color: '#6ff3ff', glow: 0.6 }],
     objects: [
       { x: 15, y: 3, draw: drawStation },
-      { x: 12, y: 32, draw: (ctx, x, y, t) => drawFerryBoat(ctx, x + 32, y + 22, t) },
+      { x: 12, y: 32, draw: (ctx, x, y, t) => drawFerryBoat(ctx, x + 32, y + 40, t) },
     ],
     chests: [
       { id: 'gardenW', x: 3, y: 23, item: 'sparkTonic' },
@@ -161,7 +161,10 @@
       } },
       { id: 'fennick', look: 'fennick', x: 16, y: 32, dir: 'up', talk: async (S, n, st) => {
         if (st.step <= 1) return S.say('fennick', 'I\'ll wait right here, Miss Wren. Go do your errand — that crate won\'t deliver itself.');
-        if (st.step === 3) return S.say('fennick', 'Whatever happened up there, I\'m taking you home. Just give me the word.');
+        if (st.step === 3) {
+          await S.say('fennick', 'Whatever happened up there, I\'m taking you home. Let me get the lines untied—');
+          return G.story.pipMeets(S);
+        }
         return G.story.fennickDepart(S);
       } },
     ],

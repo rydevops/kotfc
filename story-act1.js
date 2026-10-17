@@ -81,7 +81,7 @@
     await S.say('wren', 'The lanterns— the whole harbor\'s going dark!');
     await S.narrate('The island lurches. Somewhere far below, the mist of the Drift is suddenly, horribly closer.');
     S.music('boss');
-    S.addNpc({ id: 'guardian', look: 'tapguard', x: 13, y: 4, dir: 'down', ox: -5, oy: -9 });
+    S.addNpc({ id: 'guardian', look: 'tapguard', x: 13, y: 4, dir: 'down' });
     S.sfx('thud'); S.shake(3, 400);
     await S.emote('player', '!');
     await S.say({ name: 'Tap Guardian' }, 'TAP... OVERDRAW... PROTECT... PROTECT... PROTECT...');
@@ -123,12 +123,25 @@
 
   /* ================= 3. Pip and Cog ================= */
   story.pipMeets = async (S) => {
+    if (S.st.step !== 3) return;
     const p = S.actor('player');
-    S.face('player', 'down');
-    S.addNpc({ id: 'pip', look: 'pip', x: p.x, y: 30, dir: 'up', solid: true });
+    // Pip runs in from wherever there's room: below, above, then the sides
+    const w = G.world;
+    const tries = [[0, 3, 'UU', 'down'], [0, -3, 'DD', 'up'], [3, 0, 'LL', 'right'], [-3, 0, 'RR', 'left'], [0, 2, 'U', 'down'], [0, -2, 'D', 'up']];
+    let spot = null;
+    for (const [dx, dy, path, face] of tries) {
+      const sx = p.x + dx, sy = p.y + dy;
+      const stepX = Math.sign(dx), stepY = Math.sign(dy);
+      let ok = w.passable(sx, sy);
+      for (let i = 1; ok && i < Math.max(Math.abs(dx), Math.abs(dy)); i++) ok = w.passable(p.x + stepX * i, p.y + stepY * i);
+      if (ok) { spot = { sx, sy, path, face }; break; }
+    }
+    if (!spot) spot = { sx: p.x, sy: p.y + 1, path: '', face: 'down' };
+    S.face('player', spot.face);
+    S.addNpc({ id: 'pip', look: 'pip', x: spot.sx, y: spot.sy, dir: 'up', solid: true });
     S.sfx('cog');
     await S.emote('player', '!');
-    await S.move('pip', 'UU', 120);
+    await S.move('pip', spot.path, 120);
     await S.say('cog', 'BZZT-WHIRR-BLEEP!!');
     await S.say('pip', 'COG! Cog, you can\'t just *tackle* strangers! Sorry. Sorry! He doesn\'t usually— well. He does. But not usually strangers.');
     await S.say('wren', 'Is your lantern... yelling at me?');
@@ -301,7 +314,7 @@
   story.golem = async (S) => {
     S.face('player', 'up');
     S.sfx('thud'); S.shake(5, 900);
-    S.addNpc({ id: 'golem', look: 'golemNpc', x: 20, y: 2, dir: 'down', ox: -5, oy: -9 });
+    S.addNpc({ id: 'golem', look: 'golemNpc', x: 20, y: 2, dir: 'down' });
     await S.narrate('The shelves groan. Pages lift into the air and fold together into a shape — tall, heavy, with eyes like reading lamps.');
     await S.say({ name: 'Archive Golem' }, 'UNAUTHORISED... BORROWERS. ALL VOLUMES... MUST BE RETURNED.');
     await S.say('pip', 'Is it— is it trying to *fine* us?');

@@ -25,7 +25,7 @@
     update(dt) { G.scenes.get('title').t += dt; },
     async show() {
       const L = document.getElementById('layer-screen');
-      L.innerHTML = `<div class="slots"><h2>Choose a Journey</h2><div class="slot-list list"></div></div>`;
+      L.innerHTML = `<div class="slots win"><h2>Choose a Journey</h2><div class="slot-list list"></div></div>`;
       const list = L.querySelector('.slot-list');
       const items = [];
       for (let i = 1; i <= SLOTS; i++) {

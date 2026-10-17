@@ -7,23 +7,33 @@
 (function () {
   'use strict';
   const U = G.util;
+  // a hand-pixelled street lantern (k rim · a/A/g brass · y/Y/W glass glow)
   const LANTERN = [
-    '....OOOO....',
-    '...O....O...',
-    '....OOOO....',
-    '..OOOOOOOO..',
-    '.OAAAAAAAAO.',
-    '.OAYYYYYYAO.',
-    '.OAYWWWWYAO.',
-    '.OAYWWWWYAO.',
-    '.OAYYYYYYAO.',
-    '.OAYYYYYYAO.',
-    '.OAAAAAAAAO.',
-    '..OOOOOOOO..',
-    '....OAAO....',
-    '....OOOO....',
+    '.......kk.......',
+    '......kggk......',
+    '.......kk.......',
+    '.....kkAAkk.....',
+    '....kgaaaaAk....',
+    '...kkkkkkkkkk...',
+    '..kgaAAAAAAaAk..',
+    '..kAkYYYYYYkAk..',
+    '..kaYyyyyyyYak..',
+    '..kaYyWWWWyYak..',
+    '..kaYyWWWWyYak..',
+    '..kaYyWWWWyYak..',
+    '..kaYyyWWyyYak..',
+    '..kaYyyyyyyYak..',
+    '..kAkYYYYYYkAk..',
+    '..kgaAAAAAAaAk..',
+    '...kkkkkkkkkk...',
+    '....kAaaaaAk....',
+    '.....kkAAkk.....',
+    '.......kk.......',
   ];
-  G.lanternSprite = (lit) => G.gfx.fromRows(LANTERN, { O: '#1a1226', A: '#c8903a', Y: lit ? '#ffc850' : '#34344a', W: lit ? '#fff6c8' : '#44445a' });
+  G.lanternSprite = (lit) => G.art.paint(G.art.grid(LANTERN), {
+    k: '#140c10', a: '#c8903a', A: '#8a5a20', g: '#f0d070',
+    Y: lit ? '#e88a30' : '#2a2a3a', y: lit ? '#ffc850' : '#36364a', W: lit ? '#fff8d8' : '#44445a',
+  });
 
   G.scenes.register('boot', {
     t: 0, lit: false, litT: 0,
@@ -49,7 +59,7 @@
         await U.sleep(1100);
         G.scenes.go('intro', {}, { fadeMs: 700 });
       };
-      box.addEventListener('click', go);
+      G.ui.onTap(box, go);
       const h = G.input.push((b) => { if (b === 'a') go(); return true; });
     },
     exit() { document.getElementById('layer-screen').innerHTML = ''; },

@@ -21,7 +21,7 @@
       </div>`;
     L.classList.add('open');
     const root = $('.menu', L);
-    $('.menu-x', root).addEventListener('click', (e) => { e.stopPropagation(); const t = root.querySelector('.list._active') || $('.menu-tabs', root); t._cancel && t._cancel(); });
+    G.ui.onTap($('.menu-x', root), (e) => { e.stopPropagation(); const t = root.querySelector('.list._active') || $('.menu-tabs', root); t._cancel && t._cancel(); });
     return root;
   }
   function close() { const L = layer(); L.innerHTML = ''; L.classList.remove('open'); }

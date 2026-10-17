@@ -63,7 +63,11 @@
         const total = segs.reduce((s, x) => s + x.t.length, 0);
         let n = 0, done = false, timer;
         const speed = opts.speed || 28;
-        const finish = () => { done = true; clearInterval(timer); txt.innerHTML = renderSegs(segs, total); more.classList.add('show'); };
+        const finish = () => {
+          done = true; clearInterval(timer); txt.innerHTML = renderSegs(segs, total);
+          if (opts.choices) { more.remove(); advance(); return; } // choices appear right away
+          more.classList.add('show');
+        };
         timer = setInterval(() => {
           n += 1;
           txt.innerHTML = renderSegs(segs, n);
@@ -94,7 +98,7 @@
     /* ---- Choice ---- resolves to the chosen index */
     async choose(who, text, options, opts = {}) {
       if (text) {
-        await ui.say(who, text, { keep: true });
+        await ui.say(who, text, { keep: true, choices: true });
       }
       const layer = $('layer-dialog');
       const box = U.el('div', 'choice win');
@@ -121,13 +125,29 @@
         const btns = items.map((it, i) => {
           const b = U.el('button', 'item tap' + (it.disabled ? ' disabled' : '') + (it.cls ? ' ' + it.cls : ''));
           b.innerHTML = `<span class="l">${it.label}</span>` + (it.right != null ? `<span class="r">${it.right}</span>` : '');
-          b.addEventListener('pointerdown', (e) => e.stopPropagation());
-          b.addEventListener('click', (e) => {
+          // Activate on pointerup (not 'click'): iOS drops or delays synthetic clicks,
+          // which made menus feel unresponsive. A small drag still counts as a tap,
+          // a real scroll gesture does not.
+          let down = null;
+          b.addEventListener('pointerdown', (e) => {
             e.stopPropagation();
+            down = { id: e.pointerId, x: e.clientX, y: e.clientY };
+            b.classList.add('press');
+          });
+          const clear = () => { down = null; b.classList.remove('press'); };
+          b.addEventListener('pointerup', (e) => {
+            e.stopPropagation();
+            const d = down; clear();
+            if (!d || d.id !== e.pointerId || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 14) return;
             if (it.disabled) { G.audio.sfx('error'); return; }
-            if (focus !== i) setFocus(i);
+            if (focus !== i) setFocus(i, true);
             pick(i);
           });
+          b.addEventListener('pointercancel', clear);
+          b.addEventListener('pointerleave', clear);
+          b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); });
+          b.tabIndex = -1;
+          b.tap = () => { if (!it.disabled) { if (focus !== i) setFocus(i, true); pick(i); } };
           container.appendChild(b);
           return b;
         });
@@ -138,7 +158,13 @@
           if (btns[focus]) btns[focus].classList.remove('focus');
           focus = i;
           btns[i].classList.add('focus');
-          btns[i].scrollIntoView({ block: 'nearest' });
+          // keep the focused item visible without scrolling the page itself
+          const b = btns[i], sc = b.closest('.scroll') || container;
+          if (sc.scrollHeight > sc.clientHeight) {
+            const br = b.getBoundingClientRect(), sr = sc.getBoundingClientRect();
+            if (br.top < sr.top) sc.scrollTop -= sr.top - br.top;
+            else if (br.bottom > sr.bottom) sc.scrollTop += br.bottom - sr.bottom;
+          }
           if (!silent) G.audio.sfx('cursor');
           opts.onFocus && opts.onFocus(items[i], i);
         };
@@ -174,6 +200,19 @@
       });
     },
 
+    /* Reliable tap handler for any element (fires on pointerup, ignores drags). */
+    onTap(el, fn) {
+      let down = null;
+      el.addEventListener('pointerdown', (e) => { down = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+      el.addEventListener('pointerup', (e) => {
+        const d = down; down = null;
+        if (!d || d.id !== e.pointerId || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 14) return;
+        e.stopPropagation();
+        fn(e);
+      });
+      el.addEventListener('pointercancel', () => (down = null));
+    },
+
     /* ---- Toast ---- */
     toast(html, ms = 2200) {
       const t = U.el('div', 'toast win', html);
@@ -206,6 +245,24 @@
       return `<span class="bar ${cls}"><span style="width:${p}%"></span></span>`;
     },
   });
+
+  /* The white glove cursor, drawn once and shared with CSS as --cursor */
+  ui.cursorCanvas = (function () {
+    const rows = [
+      '.....kkkkk........',
+      '....kwwwwwkkkkkkk.',
+      '...kwwwwwwwwwwwwwk',
+      '..kwwgwwwwkkkkkkk.',
+      '..kwgwwwwwwwwk....',
+      '..kwgwwwwkkkk.....',
+      '..kwggwwwwwwk.....',
+      '..kwgggwwkkk......',
+      '...kwgggwwwk......',
+      '....kkkkkkk.......'];
+    const c = G.art.paint(G.art.grid(rows), { k: '#101018', w: '#f8f8f8', g: '#a8acc8' });
+    try { document.documentElement.style.setProperty('--cursor', `url(${G.gfx.toDataURL(c, 3)})`); } catch (e) { /* ignore */ }
+    return c;
+  })();
 
   /* Flow meter states from the design doc */
   G.flowState = (f) => {

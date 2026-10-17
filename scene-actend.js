@@ -22,7 +22,7 @@
           </div>
           <button class="ae-btn tap">Return to Title</button>
         </div>`;
-      L.querySelector('.ae-btn').addEventListener('click', () => G.scenes.go('title', {}, { fadeMs: 800 }));
+      G.ui.onTap(L.querySelector('.ae-btn'), () => G.scenes.go('title', {}, { fadeMs: 800 }));
       G.game.save();
     },
     exit() { document.getElementById('layer-screen').innerHTML = ''; },

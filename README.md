@@ -1,8 +1,11 @@
 # Key of the Fading Current
 
-A turn-based pixel RPG for iPhone (and anything with a browser), built for GitHub Pages.
-No build step, no libraries and no asset files. All pixel art, music and sound effects are
-generated in code, and every file lives in the root folder.
+A turn-based pixel RPG for iPhone (and anything with a browser), built for GitHub Pages, in the style of the
+16-bit Square classics: hand-pixelled sprites, side-view battles with painted monsters, blue menu windows with a
+glove cursor, and a Mode 7 flight over the clouds in the opening.
+No build step and no libraries. The pixel art is authored as text inside the code, the music and sound
+effects are synthesised, and every file lives in the root folder (the only binary assets are the icons and the
+bundled DotGothic16 pixel font, licensed under the SIL Open Font License).
 
 **Act I: The Lantern Falls** is fully playable: the intro cutscene, Pennywhistle Harbor, the tap-station failure,
 Pip and Cog joining, the Astral Conservatory, Aldrith's study, the Records Vault and the escape.
@@ -72,8 +75,8 @@ Scripts load in order from `index.html`. Each file adds itself to one global obj
 
 | Group | Files |
 | --- | --- |
-| Engine | `core.js` (utilities, registry, scenes) · `gfx.js` (pixel-perfect canvas) · `font.js` · `input.js` · `audio.js` (synth + sound effects) · `ui.js` (dialog, lists, toasts) · `state.js` (stats, inventory, saving) |
-| Art | `sprites-chars.js` (people generator) · `sprites-mobs.js` (monster pixel art) · `tiles.js` · `sky.js` |
+| Engine | `core.js` (utilities, registry, scenes) · `gfx.js` (pixel-perfect canvas) · `pix.js` (colour ramps) · `art.js` (ASCII sprite kit: grids, blits, outlines, palettes) · `font.js` · `input.js` · `audio.js` (synth + sound effects) · `ui.js` (dialog, lists, glove cursor) · `state.js` (stats, inventory, saving) |
+| Art | `sprites-chars.js` (16px field sprites from hair/outfit/accessory parts) · `sprites-battle.js` (side-view battle poses, weapons, portraits) · `sprites-mobs.js` (painted monsters from material masks) · `tiles.js` · `sky.js` · `terrain.js` (floating-island cliffs) · `backdrops.js` (battle panoramas with Mode-7 floors) · `mode7.js` (perspective cloud sea, sky-ferry) · `fx.js` (spell effects, damage numbers) |
 | Data | `data-party.js` · `data-items.js` · `data-mobs.js` · `data-shops.js` · `music.js` |
 | World | `map-*.js` (one file per map) · `story-act1.js` (cutscenes + journal) |
 | Systems | `script.js` (cutscene API) · `world.js` · `battle.js` · `battle-ui.js` · `menu.js` |
@@ -110,8 +113,23 @@ async (S) => {
 }
 ```
 
-**A new person:** register a look in `sprites-chars.js` with colours and accessories (`goggles`, `beard`, `hat`,
-`cap`, `apron`, `longhair`, `bun`, `robe`, `stars`, `scarf`, `belt`, `cord`), then add a speaker entry for dialog.
+**A new person:** register a look in `sprites-chars.js` with colours, a hair `style` (`short`, `spiky`, `long`, `bun`,
+`ponytail`, `hood`, `bald`), an `outfit` (`tunic`, `cloak`, `coat`, `robe`, `dress`) and accessories (`goggles`, `beard`,
+`hat`, `cap`, `apron`, `belt`, `patch`, `stars`, `cord`, `scarf`, `pendant`), then add a speaker entry for dialog.
+The parts are drawn as letter grids (`h` hair, `s` skin, `c` cloth...), so the same drawing palette-swaps into
+anyone. Party members also get battle sprites (`G.sprites.battler(look, weapon)`) with the poses stand, walk,
+raise, strike, cast, hurt, kneel, victory and dead.
+
+**A new monster design:** add an entry to `ART` in `sprites-mobs.js`: a `mask` (letters are materials, drawn at
+half size), a `mats` table (`c` colour, `r` roundness, `z` layer, `shine`, `glow`, `tex`) and an optional `detail`
+pass for eyes and runes. The painter smooths the mask, lights it from the top-left and rims it automatically.
+
+**A new battle backdrop:** add an entry to `G.backdrops.defs` in `backdrops.js` with a `paint` function for the
+scenery above the horizon and a `floor` texture, then use it as `battleBg` on a map.
+
+**A new spell effect:** add a case to `playFx` in `battle.js` using the effects in `fx.js` (`rune`, `bolt`, `beam`,
+`pillar`, `arc`, `ring`, `glow`, `orb`, `star`, `shield`, `cone`, `spark`, `rise`, `sparkles`, `chant`, `shards`,
+`smoke`, `vortex`).
 
 **A song:** add an entry to `music.js` with a chord progression and a melody. The engine writes the bass, arpeggios
 and drums from pattern names.

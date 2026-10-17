@@ -74,32 +74,24 @@
     tileDef(x, y) { return G.TILES[this.tileAt(x, y)] || G.TILES[' ']; },
 
     buildLayer() {
-      const { c, x } = G.gfx.makeCanvas(this.W * TS, (this.H + 2) * TS);
-      const interior = !!this.def.interior;
-      for (let ty = 0; ty < this.H + 2; ty++) {
+      const interior = !!this.def.interior, floating = !interior && !this.def.noCliffs;
+      const { c, x } = G.gfx.makeCanvas(this.W * TS, this.H * TS + (floating ? G.terrain.EXTRA : 2 * TS));
+      this.talls = [];
+      for (let ty = 0; ty < this.H + 1; ty++) {
         for (let tx = 0; tx < this.W; tx++) {
           const ch = this.tileAt(tx, ty);
           const t = G.TILES[ch];
           if (!t || t.void) {
             if (interior || this.def.noCliffs) continue;
-            // cliffs beneath land
-            const above = this.tileAt(tx, ty - 1), above2 = this.tileAt(tx, ty - 2);
-            const isLand = (c2) => c2 !== ' ' && !(G.TILES[c2] && (G.TILES[c2].bridge || G.TILES[c2].pier));
-            if (above !== ' ' && G.TILES[above] && G.TILES[above].pier) { // wooden posts under docks
-              x.fillStyle = '#3a2414'; x.fillRect(tx * TS + 2, ty * TS, 3, 12); x.fillRect(tx * TS + 11, ty * TS, 3, 9);
-              x.fillStyle = '#5a3a22'; x.fillRect(tx * TS + 2, ty * TS, 1, 12); x.fillRect(tx * TS + 11, ty * TS, 1, 9);
-              continue;
-            }
-            if (isLand(above)) G.paintCliff(x, tx * TS, ty * TS, 1, tx, ty);
-            else if (isLand(above2) && this.tileAt(tx, ty - 1) === ' ') {
-              G.paintCliff(x, tx * TS, ty * TS, 2, tx, ty, !isLand(this.tileAt(tx - 1, ty - 2)), !isLand(this.tileAt(tx + 1, ty - 2)));
-            }
+            const above = G.TILES[this.tileAt(tx, ty - 1)];
+            if (above && above.pier) drawPosts(x, tx * TS, ty * TS, tx);
             continue;
           }
-          if (t.anim) continue;
+          if (t.tall) this.talls.push({ tx, ty, t });
+          if (t.anim && !t.tall) continue;
           const d = G.makeTileDrawer(x, tx * TS, ty * TS);
           if (t.under) this.paintUnder(d, tx, ty);
-          t.paint(d, tx, ty, 0, x);
+          if (!t.tall || t.base) (t.base || t.paint)(d, tx, ty, 0, x);
         }
       }
       // roof ridges and eaves
@@ -107,23 +99,23 @@
         const ch = this.tileAt(tx, ty);
         if (ch !== '^' && ch !== 'R') continue;
         const up = this.tileAt(tx, ty - 1), dn = this.tileAt(tx, ty + 1);
-        if (up !== ch) { x.fillStyle = ch === '^' ? '#e0705a' : '#5a6ab0'; x.fillRect(tx * TS, ty * TS, TS, 2); x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(tx * TS, ty * TS + 2, TS, 1); }
-        if (dn !== ch) { x.fillStyle = 'rgba(0,0,0,0.45)'; x.fillRect(tx * TS, ty * TS + 13, TS, 3); x.fillStyle = ch === '^' ? '#5a1e18' : '#141832'; x.fillRect(tx * TS, ty * TS + 15, TS, 1); }
+        if (up !== ch) { x.fillStyle = ch === '^' ? '#f08a6a' : '#6a7ac0'; x.fillRect(tx * TS, ty * TS, TS, 2); x.fillStyle = ch === '^' ? '#5a1e18' : '#141832'; x.fillRect(tx * TS, ty * TS, TS, 1); }
+        if (dn !== ch) { x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(tx * TS, ty * TS + 12, TS, 4); x.fillStyle = ch === '^' ? '#5a1e18' : '#141832'; x.fillRect(tx * TS, ty * TS + 15, TS, 1); }
       }
-      // soft edge where land meets sky
-      if (!interior) {
-        x.fillStyle = 'rgba(255,255,255,0.10)';
-        for (let ty = 0; ty < this.H; ty++) for (let tx = 0; tx < this.W; tx++) {
-          const ch = this.tileAt(tx, ty);
-          if (ch === ' ' || G.TILES[ch].bridge) continue;
-          if (this.tileAt(tx, ty - 1) === ' ') x.fillRect(tx * TS, ty * TS, TS, 1);
-        }
+      // the island itself: rounded edges and a sculpted rocky underside
+      this.debris = []; this.terrainLights = [];
+      if (floating) {
+        G.terrain.edges(this, x);
+        const tr = G.terrain.build(this, this.map.length * 31);
+        x.drawImage(tr.canvas, 0, 0);
+        this.debris = tr.debris;
+        this.terrainLights = tr.lights;
       }
       this.layer = c;
       this.animTiles = [];
       for (let ty = 0; ty < this.H; ty++) for (let tx = 0; tx < this.W; tx++) {
         const t = G.TILES[this.tileAt(tx, ty)];
-        if (t && t.anim) this.animTiles.push({ tx, ty, t, ch: this.tileAt(tx, ty) });
+        if (t && t.anim && !t.tall) this.animTiles.push({ tx, ty, t, ch: this.tileAt(tx, ty) });
       }
     },
     // ground painted beneath objects (crates, lanterns...) = nearest walkable neighbour
@@ -139,8 +131,9 @@
       this.lights = [];
       for (let ty = 0; ty < this.H; ty++) for (let tx = 0; tx < this.W; tx++) {
         const t = G.TILES[this.tileAt(tx, ty)];
-        if (t && t.light) this.lights.push({ key: tx + ',' + ty, x: tx * TS + 8, y: ty * TS + (t.name === 'lantern' ? 4 : 8), r: t.light.r, color: t.light.color, glow: t.light.glow, lamp: !!t.lightKey, tile: t.name });
+        if (t && t.light) this.lights.push({ key: tx + ',' + ty, x: tx * TS + 8, y: ty * TS + (t.name === 'lantern' ? -6 : 8), r: t.light.r, color: t.light.color, glow: t.light.glow, lamp: !!t.lightKey, tile: t.name });
       }
+      for (const L of this.terrainLights || []) this.lights.push(Object.assign({}, L));
       for (const L of this.def.lights || []) this.lights.push(Object.assign({ key: 'x' + L.x + ',' + L.y, glow: 0.5, lamp: true }, L, { x: L.x * TS + 8, y: L.y * TS + 8 }));
     },
     isLit(light) {
@@ -227,6 +220,12 @@
           if (e === p) this.followStep();
         }
         const arrived = this.stepEntity(e, dt);
+        // the player's arrival is handled the instant a step completes, before the next
+        // step can start — otherwise holding the d-pad would skip triggers and encounters
+        if (arrived && e === p) {
+          st.x = p.x; st.y = p.y; st.dir = p.dir;
+          if (!this.busy && !(p.queue && p.queue.length)) this.onArrive();
+        }
         if (arrived && e.queue && !e.queue.length && e.onQueueDone) { const cb = e.onQueueDone; e.onQueueDone = null; e.speed = MOVE_MS; cb(); }
         if (!e.moving && !(e.queue && e.queue.length)) { e.walkT = 0; e.frame = 0; }
       }
@@ -263,12 +262,6 @@
           } else p.blocked = null;
         }
       }
-      if (p._arrivedCheck && !p.moving) {
-        p._arrivedCheck = false;
-        st.x = p.x; st.y = p.y; st.dir = p.dir;
-        if (canControl || !this.busy) this.onArrive();
-      }
-      if (p.moving) p._arrivedCheck = true;
       this.updateCamera(dt);
     },
 
@@ -411,6 +404,7 @@
       if (env.ribbons) G.sky.ribbons(ctx, this.t, env.ribbons, 0.2);
       ctx.save();
       ctx.translate(-cx, -cy + (env.sinkOffset || 0));
+      for (const d of this.debris || []) ctx.drawImage(d.img, d.x, Math.round(d.y + Math.sin(this.t / 1500 + d.ph) * 3));
       ctx.drawImage(this.layer, 0, 0);
       // animated tiles
       for (const a of this.animTiles) {
@@ -425,14 +419,24 @@
       // chests
       for (const c of this.chests) drawChest(ctx, c.x * TS, c.y * TS, this.st.opened[this.def.id + ':' + c.id]);
       // entities, sorted by y
-      const ents = [...this.npcs.filter((n) => !n.hidden), ...this.followers.slice().reverse(), this.player].sort((a, b) => a.py - b.py);
-      for (const e of ents) this.drawEntity(ctx, e);
+      const ents = [...this.npcs.filter((n) => !n.hidden), ...this.followers.slice().reverse(), this.player];
+      const drawList = ents.map((e) => ({ y: e.py + 1, e }));
+      for (const tl of this.talls || []) {
+        const px = tl.tx * TS, py = tl.ty * TS;
+        if (px + 48 < cx || px - 32 > cx + W || py + 32 < cy || py - 48 > cy + Hh) continue;
+        drawList.push({ y: py, tl });
+      }
+      drawList.sort((a, b) => a.y - b.y);
+      for (const it of drawList) {
+        if (it.e) this.drawEntity(ctx, it.e);
+        else it.tl.t.tall(ctx, it.tl.tx * TS, it.tl.ty * TS, it.tl.tx, it.tl.ty, this.frameN, this.tileLit(it.tl.tx, it.tl.ty), this.t);
+      }
       // Cog hovers near Pip
       const pipE = this.followers.find((f) => f.member === 'pip') || (this.npcs.find((n) => n.id === 'pip' && !n.hidden));
       if (pipE && !this.hideCog) {
         const bob = Math.sin(this.t / 300) * 2;
         const cog = G.sprites.char(this.st.flags.cogDim ? 'cogDim' : 'cog').down[0];
-        ctx.drawImage(cog, Math.round(pipE.px + 11), Math.round(pipE.py - 9 + bob));
+        ctx.drawImage(cog, Math.round(pipE.px + 11), Math.round(pipE.py - 14 + bob));
       }
       // overhead objects (sails, awnings) draw above characters
       for (const o of this.def.objects || []) if (o.over && (!o.cond || o.cond(this.st))) o.draw(ctx, o.x * TS, o.y * TS, this.t, this);
@@ -447,9 +451,12 @@
       const spr = G.sprites.char(e.look);
       const frames = spr[e.dir] || spr.down;
       const img = frames[e.moving || (e.queue && e.queue.length) ? e.frame : 0];
-      const x = Math.round(e.px) + (e.ox || 0), y = Math.round(e.py) - 3 + (e.oy || 0);
-      ctx.fillStyle = 'rgba(0,0,0,0.28)';
-      ctx.fillRect(x + 4, y + 16, 8, 2); ctx.fillRect(x + 3, y + 17, 10, 1);
+      // sprites stand on the bottom of their tile, centred
+      const x = Math.round(e.px + 8 - img.width / 2) + (e.ox || 0), y = Math.round(e.py + 15 - img.height) + (e.oy || 0);
+      const sw = Math.min(14, Math.max(10, img.width * 0.6));
+      ctx.fillStyle = 'rgba(10,6,20,0.3)';
+      ctx.fillRect(Math.round(e.px + 8 - sw / 2), Math.round(e.py) + 13, Math.round(sw), 2);
+      ctx.fillRect(Math.round(e.px + 8 - sw / 2 + 1), Math.round(e.py) + 15, Math.round(sw - 2), 1);
       ctx.drawImage(img, x, y);
     },
 
@@ -543,6 +550,14 @@
     npc(id) { return this.npcs.find((n) => n.id === id); },
   });
 
+  // wooden pier posts under docks, with cross-braces
+  function drawPosts(ctx, x, y, tx) {
+    ctx.fillStyle = '#2a1a10'; ctx.fillRect(x + 2, y, 4, 18 + (tx % 3) * 4); ctx.fillRect(x + 11, y, 4, 12 + (tx % 2) * 6);
+    ctx.fillStyle = '#6a4424'; ctx.fillRect(x + 3, y, 2, 17 + (tx % 3) * 4); ctx.fillRect(x + 12, y, 2, 11 + (tx % 2) * 6);
+    ctx.fillStyle = '#8a5a30'; ctx.fillRect(x + 3, y, 1, 17 + (tx % 3) * 4); ctx.fillRect(x + 12, y, 1, 11 + (tx % 2) * 6);
+    ctx.fillStyle = '#4a2e18'; for (let i = 0; i < 8; i++) ctx.fillRect(x + 4 + i, y + 3 + i, 2, 1);
+  }
+
   function drawChest(ctx, x, y, open) {
     ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(x + 2, y + 14, 12, 2);
     ctx.fillStyle = '#3a2010'; ctx.fillRect(x + 2, y + 5, 12, 10);
@@ -555,7 +570,7 @@
   function drawEmote(ctx, e) {
     const txt = e.emote.text;
     const w = G.font.measure(txt) + 5;
-    const x = Math.round(e.px + 8 - w / 2), y = Math.round(e.py - 14 + Math.sin(world.t / 120) * 0.8);
+    const x = Math.round(e.px + 8 - w / 2), y = Math.round(e.py - 22 + Math.sin(world.t / 120) * 0.8);
     ctx.fillStyle = '#1a1226'; ctx.fillRect(x - 1, y - 1, w + 2, 10);
     ctx.fillStyle = '#fffbe8'; ctx.fillRect(x, y, w, 8);
     ctx.fillRect(x + w / 2 - 1, y + 8, 2, 2);
