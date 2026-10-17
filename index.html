@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Key of the Fading Current</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="A turn-based pixel RPG. The Current is fading, and Wren Ashgrove is the key.">
+  <meta name="theme-color" content="#0d1024">
+  <!-- iOS home-screen app -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fading Current">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style-base.css">
+  <link rel="stylesheet" href="style-ui.css">
+  <link rel="stylesheet" href="style-battle.css">
+</head>
+<body>
+  <div id="game">
+    <canvas id="screen"></canvas>
+
+    <!-- In-world heads-up display -->
+    <div id="hud" class="hidden">
+      <div id="hud-place"></div>
+      <div id="hud-right">
+        <div id="hud-flow" class="flow-mini" aria-label="Current Flow"></div>
+        <button id="btn-menu" class="hud-btn" aria-label="Menu">☰</button>
+      </div>
+      <div id="hud-objective"></div>
+    </div>
+
+    <!-- Touch controls -->
+    <div id="controls" class="hidden">
+      <div id="dpad" aria-label="Direction pad">
+        <div class="dp up"></div><div class="dp down"></div>
+        <div class="dp left"></div><div class="dp right"></div>
+        <div id="dpad-nub"></div>
+      </div>
+      <div id="buttons">
+        <button id="btn-b" class="round-btn" aria-label="Back">B</button>
+        <button id="btn-a" class="round-btn" aria-label="Action">A</button>
+      </div>
+    </div>
+
+    <!-- Layers built by ui.js / scenes -->
+    <div id="layer-screen"></div>   <!-- full-screen scenes: boot, intro captions, title, slots -->
+    <div id="layer-battle"></div>   <!-- battle UI -->
+    <div id="layer-menu"></div>     <!-- pause menu, shop, inn -->
+    <div id="layer-dialog"></div>   <!-- dialog boxes and choices -->
+    <div id="layer-toast"></div>    <!-- small notices -->
+    <div id="fade"></div>
+  </div>
+
+  <!--
+    Load order matters: core first, then engine systems, then data, then scenes, then main.
+    Every file registers itself on the global `G` namespace, so new content files can be
+    added anywhere after the engine block and before main.js.
+  -->
+  <!-- Engine -->
+  <script src="core.js"></script>
+  <script src="gfx.js"></script>
+  <script src="font.js"></script>
+  <script src="input.js"></script>
+  <script src="audio.js"></script>
+  <script src="music.js"></script>
+  <script src="ui.js"></script>
+  <script src="state.js"></script>
+
+  <!-- Art -->
+  <script src="sprites-chars.js"></script>
+  <script src="sprites-mobs.js"></script>
+  <script src="tiles.js"></script>
+  <script src="sky.js"></script>
+
+  <!-- Game data -->
+  <script src="data-party.js"></script>
+  <script src="data-items.js"></script>
+  <script src="data-mobs.js"></script>
+  <script src="data-shops.js"></script>
+  <script src="map-ferry.js"></script>
+  <script src="map-harbor.js"></script>
+  <script src="map-conservatory.js"></script>
+  <script src="map-study.js"></script>
+  <script src="map-vault.js"></script>
+  <script src="story-act1.js"></script>
+
+  <!-- Systems & scenes -->
+  <script src="script.js"></script>
+  <script src="world.js"></script>
+  <script src="battle.js"></script>
+  <script src="battle-ui.js"></script>
+  <script src="menu.js"></script>
+  <script src="scene-boot.js"></script>
+  <script src="scene-intro.js"></script>
+  <script src="scene-title.js"></script>
+  <script src="scene-slots.js"></script>
+  <script src="scene-actend.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
