@@ -76,10 +76,10 @@
   });
 
   /* ======================= ACT II+ (ready for expansion) ======================= */
-  M('gleamfin', { name: 'Gleamfin', family: 'wildlife', art: 'fish', lvl: 7, hp: 90, str: 15, def: 9, res: 10, spd: 12, exp: 34, gold: 20, moves: [{ name: 'Fin Slice', kind: 'phys', mult: 1, w: 1 }], desc: 'Sky-fish. They glow when they are frightened.' });
+  M('gleamfin', { name: 'Gleamfin', family: 'wildlife', art: 'fish', lvl: 7, hp: 90, str: 15, def: 9, res: 10, spd: 12, exp: 34, gold: 20, moves: [{ name: 'Fin Slice', kind: 'phys', mult: 1, w: 1 }], desc: 'A sky-fish. It glows when it is frightened.' });
   M('mistfox', { name: 'Mistfox', family: 'wildlife', art: 'fox', lvl: 8, hp: 100, str: 17, def: 10, res: 8, spd: 15, luk: 12, exp: 38, gold: 24, moves: [{ name: 'Snap', kind: 'phys', mult: 1, w: 3 }, { name: 'Fog Veil', kind: 'status', status: { id: 'blind', turns: 2 }, w: 1 }], desc: 'A cloud-fox. Half of it is mist.' });
   M('runawayGolem', { name: 'Runaway Golem', family: 'machine', art: 'golem', pal: { stone: '#a0784a', rune: '#ff6a2a' }, size: 60, lvl: 9, hp: 160, str: 20, def: 16, res: 6, spd: 5, exp: 50, gold: 40, moves: [{ name: 'Haywire Swing', kind: 'phys', mult: 1.2, w: 1 }], desc: 'Haywire, not evil.' });
-  M('hollowedVillager', { name: 'Hollowed Villager', family: 'hollowed', art: 'look:hollowed', lvl: 12, hp: 150, str: 18, def: 12, res: 14, spd: 6, exp: 0, gold: 0, calmable: true, moves: [{ name: 'Hum', kind: 'mag', power: 16, w: 1 }], desc: 'Pale, still, humming. Defeat leaves them asleep, not gone.' });
+  M('hollowedVillager', { name: 'Hollowed Villager', family: 'hollowed', art: 'look:hollowed', lvl: 12, hp: 150, str: 18, def: 12, res: 14, spd: 6, exp: 0, gold: 0, calmable: true, moves: [{ name: 'Hum', kind: 'mag', power: 16, w: 1 }], desc: 'Pale, still, and humming. Defeating them leaves them asleep, not gone.' });
   M('syndicateGuard', { name: 'Syndicate Guard', family: 'human', art: 'look:dockhand', lvl: 10, hp: 170, str: 22, def: 14, res: 6, spd: 9, exp: 55, gold: 60, moves: [{ name: 'Cudgel', kind: 'phys', mult: 1, w: 1 }], desc: 'Tallow Cay muscle.' });
 
   // Bosses still to come (mechanics listed for future implementation)

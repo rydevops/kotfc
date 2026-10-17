@@ -40,10 +40,10 @@
       { x: 7, y: 4, cond: (st) => st.step >= 6, run: async (S, st) => {
         await S.narrate('A letter lies on the desk, half-written. The ink is still wet.');
         await S.narrate('"...the girl is nearly ready. The key has begun to wake. It will not be long now."');
-        if (!st.flags.readLetter) { S.flag('readLetter'); await S.say('wren', '"The girl." ...He means someone else. He has to mean someone else.'); }
+        if (!st.flags.readLetter) { S.flag('readLetter'); await S.say('wren', '"The girl"... He means someone else. He has to mean someone else.'); }
       } },
-      { x: 13, y: 1, run: (S) => S.narrate('A star globe. Tiny brass islands orbit a glowing core. One of them — Pennywhistle — has slipped off its wire.') },
-      { x: 2, y: 1, run: (S) => S.narrate('"Tap-Station Engineering, Vol. IV". "The Founders: A Lost People". "On the Ascension of Mortal Minds". Well-thumbed, all of them.') },
+      { x: 13, y: 1, run: (S) => S.narrate('A star globe. Tiny brass islands orbit a glowing core. One of them, Pennywhistle, has slipped off its wire.') },
+      { x: 2, y: 1, run: (S) => S.narrate('"Tap-Station Engineering, Vol. IV." "The Founders: A Lost People." "On the Ascension of Mortal Minds." All of them are well-thumbed.') },
     ],
     onEnter: async (S, st) => {
       if (st.step === 5 && !st.flags.metAldrith) return G.story.aldrithLie(S);
@@ -51,7 +51,7 @@
         S.flag('studyNight');
         await S.say('pip', 'Empty. Where does an Archmage even go at midnight?');
         await S.say('wren', 'The observatory, usually. He says the stars are better company than people.');
-        await S.say('wren', 'The map table. Quickly.');
+        await S.say('wren', 'To the map table. Quickly.');
       }
     },
   });

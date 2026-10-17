@@ -27,7 +27,7 @@
       { id: 'sparkLance', lvl: 1 }, { id: 'lanternMend', lvl: 1 }, { id: 'starVolley', lvl: 5 },
       { id: 'tapSlash', lvl: 1, flag: 'blade2' }, { id: 'unlock', lvl: 1, flag: 'blade3' }, { id: 'foundersLight', lvl: 1, flag: 'blade4' },
     ],
-    bio: 'Nineteen. Quick-witted, stubbornly loyal, jokes when scared. Adopted ward of Archmage Aldrith. Wears a plain brass pendant she has had since her tenth birthday.',
+    bio: 'Nineteen years old, quick-witted, and stubbornly loyal. She jokes when she is scared. Adopted ward of Archmage Aldrith. She wears a plain brass pendant she has had since her tenth birthday.',
   });
 
   C('pip', {
@@ -37,7 +37,7 @@
     equip: { weapon: 'spanner', armor: 'workApron' },
     attack: { name: 'Tinker Bolt', fx: 'bolt' },
     skills: [{ id: 'patchKit', lvl: 1 }, { id: 'cogsLantern', lvl: 1 }, { id: 'snareTrap', lvl: 4 }],
-    bio: 'Tiny, fast-talking, always tinkering. Travels with Cog, a sarcastic hovering lantern built by Pip\'s lost mentor, Odalys Fenwick.',
+    bio: 'Tiny, fast-talking, and always tinkering. Travels with Cog, a sarcastic hovering lantern built by Pip\'s lost mentor, Odalys Fenwick.',
   });
 
   C('vesper', {
@@ -47,7 +47,7 @@
     equip: {},
     attack: { name: 'Quick Stab', fx: 'slash', crit: 0.12 },
     skills: [{ id: 'pickpocket', lvl: 1 }, { id: 'smokeTrick', lvl: 1 }, { id: 'crystalGamble', lvl: 1 }],
-    bio: 'Sly and sharp-tongued. Knows the black market for Current crystals better than anyone.',
+    bio: 'Sly and sharp-tongued. She knows the black market for Current crystals better than anyone.',
   });
 
   C('hollis', {
@@ -57,30 +57,30 @@
     equip: {},
     attack: { name: 'Open Palm', fx: 'slash' },
     skills: [{ id: 'quietHand', lvl: 1 }, { id: 'listen', lvl: 1 }, { id: 'hushWard', lvl: 1 }, { id: 'currentsVoice', lvl: 1, flag: 'voice' }],
-    bio: 'Soft-spoken healer of the Quiet Hands, sworn never to use the Current for harm. He can hear it speak.',
+    bio: 'A soft-spoken healer of the Quiet Hands, sworn never to use the Current for harm. He can hear it speak.',
   });
 
   /* ---------------- Wren ---------------- */
   K('sparkLance', { name: 'Spark Lance', desc: 'An academy cantrip: a lance of Current at one foe.', mp: 3, flow: 2, target: 'enemy', kind: 'mag', power: 14, fx: 'spark', sfx: 'spark' });
   K('lanternMend', { name: 'Lantern Mend', desc: 'Warm light that closes wounds on one ally.', mp: 4, flow: 2, target: 'ally', kind: 'heal', power: 18, fx: 'heal', sfx: 'heal' });
   K('starVolley', { name: 'Star Volley', desc: 'A rain of tiny stars on every foe.', mp: 7, flow: 4, target: 'enemies', kind: 'mag', power: 12, fx: 'stars', sfx: 'magic' });
-  K('tapSlash', { name: 'Tap Slash', desc: 'Heavy key-blade hit that also restores a little party health.', mp: 4, flow: 2, target: 'enemy', kind: 'phys', mult: 1.8, healParty: 0.1, fx: 'key', sfx: 'crit' });
+  K('tapSlash', { name: 'Tap Slash', desc: 'A heavy key-blade strike that also restores a little health to the whole party.', mp: 4, flow: 2, target: 'enemy', kind: 'phys', mult: 1.8, healParty: 0.1, fx: 'key', sfx: 'crit' });
   K('unlock', { name: 'Unlock', desc: 'Opens a weak point: the whole party hits harder for two turns.', mp: 5, flow: 3, target: 'enemy', kind: 'status', status: { id: 'unlocked', turns: 2 }, fx: 'key', sfx: 'shield' });
-  K('foundersLight', { name: "Founder's Light", desc: 'A wide burst of pure light. Wren\'s ultimate.', mp: 14, flow: 6, target: 'enemies', kind: 'mag', power: 60, fx: 'light', sfx: 'bright' });
+  K('foundersLight', { name: "Founder's Light", desc: 'A wide burst of pure light. Wren\'s ultimate skill.', mp: 14, flow: 6, target: 'enemies', kind: 'mag', power: 60, fx: 'light', sfx: 'bright' });
 
   /* ---------------- Pip ---------------- */
-  K('patchKit', { name: 'Patch Kit', desc: 'Gauze, glue and optimism. Heals one ally.', mp: 3, flow: 2, target: 'ally', kind: 'heal', power: 22, fx: 'heal', sfx: 'gadget' });
+  K('patchKit', { name: 'Patch Kit', desc: 'Gauze, glue, and optimism. Heals one ally.', mp: 3, flow: 2, target: 'ally', kind: 'heal', power: 22, fx: 'heal', sfx: 'gadget' });
   K('cogsLantern', { name: "Cog's Lantern", desc: 'Cog shines on a foe, revealing it and lowering its Defense.', mp: 2, flow: 1, target: 'enemy', kind: 'status', status: { id: 'exposed', turns: 3 }, special: 'cogsLantern', fx: 'lantern', sfx: 'cog' });
   K('snareTrap', { name: 'Snare Trap', desc: 'Holds an enemy in place for a turn.', mp: 4, flow: 2, target: 'enemy', kind: 'status', status: { id: 'snared', turns: 1 }, fx: 'trap', sfx: 'gadget' });
 
   /* ---------------- Vesper ---------------- */
-  K('pickpocket', { name: 'Pickpocket', desc: 'Steals an item, or a bit of an enemy\'s Flow.', mp: 1, flow: 1, target: 'enemy', kind: 'special', special: 'pickpocket', fx: 'slash', sfx: 'buy' });
+  K('pickpocket', { name: 'Pickpocket', desc: 'Steals an item. If that fails, skims a little Current for the party.', mp: 1, flow: 1, target: 'enemy', kind: 'special', special: 'pickpocket', fx: 'slash', sfx: 'buy' });
   K('smokeTrick', { name: 'Smoke Trick', desc: 'Lowers every enemy\'s accuracy for two turns.', mp: 4, flow: 2, target: 'enemies', kind: 'status', status: { id: 'blind', turns: 2 }, fx: 'smoke', sfx: 'flee' });
-  K('crystalGamble', { name: 'Crystal Gamble', desc: 'Big damage — more on a snared foe — but costs her some health.', mp: 5, flow: 3, target: 'enemy', kind: 'phys', mult: 2.6, selfDamage: 0.1, snareBonus: 1.5, fx: 'crystal', sfx: 'crit' });
+  K('crystalGamble', { name: 'Crystal Gamble', desc: 'Deals big damage, even more to a snared foe, but costs her some health.', mp: 5, flow: 3, target: 'enemy', kind: 'phys', mult: 2.6, selfDamage: 0.1, snareBonus: 1.5, fx: 'crystal', sfx: 'crit' });
 
   /* ---------------- Hollis ---------------- */
   K('quietHand', { name: 'Quiet Hand', desc: 'Heals one ally.', mp: 4, flow: 2, target: 'ally', kind: 'heal', power: 24, fx: 'heal', sfx: 'heal' });
-  K('listen', { name: 'Listen', desc: 'Hear the Current: reveals each enemy\'s next move and softens Surges this round.', mp: 2, flow: 1, target: 'self', kind: 'special', special: 'listen', fx: 'ward', sfx: 'shield' });
+  K('listen', { name: 'Listen', desc: 'Hear the Current. Reveals each enemy\'s next move and softens Surges this round.', mp: 2, flow: 1, target: 'self', kind: 'special', special: 'listen', fx: 'ward', sfx: 'shield' });
   K('hushWard', { name: 'Hush Ward', desc: 'Shields the whole party for a turn.', mp: 8, flow: 3, target: 'allies', kind: 'status', status: { id: 'ward', turns: 1 }, fx: 'ward', sfx: 'shield' });
   K('currentsVoice', { name: "The Current's Voice", desc: 'Calms Surges and stops rift spawn from acting. Never causes a Surge.', mp: 12, flow: 4, target: 'self', kind: 'special', special: 'voice', noSurge: true, fx: 'light', sfx: 'bright' });
 

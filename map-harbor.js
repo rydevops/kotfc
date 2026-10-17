@@ -123,8 +123,8 @@
       { x: 14, y: 26, w: 5, h: 1, cond: (st) => st.step === 3, run: (S) => G.story.pipMeets(S) },
     ],
     interact: [
-      { x: 16, y: 5, cond: (st) => st.step >= 2, run: (S) => S.narrate('The crystal chamber is cracked. Something deep inside still hums — wrong, like a held breath.') },
-      { x: 15, y: 5, run: (S) => S.narrate('PENNYWHISTLE TAP-STATION. Draws the Current for 214 households, 9 ovens and 1 very old ferry.') },
+      { x: 16, y: 5, cond: (st) => st.step >= 2, run: (S) => S.narrate('The crystal chamber is cracked. Something deep inside still hums, wrong and tense, like a held breath.') },
+      { x: 15, y: 5, run: (S) => S.narrate('PENNYWHISTLE TAP-STATION. Draws the Current for 214 households, nine ovens, and one very old ferry.') },
       { x: 17, y: 5, run: (S) => S.narrate('A brass plaque: "Built in the Founders\' Age. Do not open. Do not lick."') },
       { x: 5, y: 11, run: (S) => S.narrate('Baskets of bread, wrapped in cloth against the evening chill.') },
     ],
@@ -137,32 +137,32 @@
         await S.shop('harborBakery');
       } },
       { id: 'innkeep', look: 'innkeep', x: 25, y: 11, dir: 'down', talk: async (S, n, st) => {
-        if (dark(st)) await S.say({ name: 'Marta', look: 'innkeep' }, 'We\'ve still got beds and blankets, even if we\'ve no light. Isolde\'s resting upstairs.');
+        if (dark(st)) await S.say({ name: 'Marta', look: 'innkeep' }, 'We\'ve still got beds and blankets, even without any light. Isolde insists on resting out front, where she can keep watch.');
         await S.inn('harborInn');
       } },
       { id: 'grocer', look: 'grocer', x: 24, y: 18, dir: 'down', talk: (S) => S.shop('harborStore') },
       { id: 'lighter', look: 'lighter', x: 12, y: 8, dir: 'down', wander: 2, talk: (S, n, st) => S.say({ name: 'Lantern-lighter', look: 'lighter' },
-        dark(st) ? 'I\'ve lit every wick I own. They won\'t take. It isn\'t the oil, Wren. It\'s the Current. It\'s just... gone.'
-          : 'Third time this week I\'ve relit Old Maud\'s lantern. They just gutter out. Like they\'re tired.') },
+        dark(st) ? 'I\'ve lit every wick I own, and none of them will take. It isn\'t the oil, Wren. It\'s the Current. It\'s just... gone.'
+          : 'That\'s the third time this week I\'ve relit Old Maud\'s lantern, and it keeps guttering out. It\'s as if it\'s tired.') },
       { id: 'kid', look: 'kid', x: 9, y: 13, dir: 'down', wander: 3, talk: (S, n, st) => S.say({ name: 'Nettle', look: 'kid' },
-        dark(st) ? 'Mum says the island isn\'t sinking. Then why is the mist closer? Why is it CLOSER, Wren?'
-          : 'Wanna know a secret? If you lean over the edge you can see the mist moving down there. Mum says don\'t.') },
+        dark(st) ? 'Mom says the island isn\'t sinking. Then why is the mist closer? Why is it CLOSER, Wren?'
+          : 'Wanna know a secret? If you lean over the edge, you can see the mist moving down there. Mom says not to.') },
       { id: 'granny', look: 'granny', x: 21, y: 12, dir: 'left', talk: (S, n, st) => S.say({ name: 'Old Maud', look: 'granny' },
         dark(st) ? 'Eighty-one years on this island, and the lanterns have never gone out. Not once. Not once, dear.'
-          : 'The Archmage visited once, when I was a girl. Kindest eyes I ever saw. And you\'re his ward! Lucky, lucky girl.') },
+          : 'The Archmage visited once, when I was a girl. He had the kindest eyes I ever saw. And you\'re his ward! Lucky, lucky girl.') },
       { id: 'fisher', look: 'fisher', x: 18, y: 29, dir: 'left', talk: (S, n, st) => S.say({ name: 'Cloud-fisher', look: 'fisher' },
-        dark(st) ? 'Never seen the Drift this close. Can practically smell the wrecks down there.'
-          : 'Hauled up nothing but fog today. The sky-fish are swimming lower. Everything\'s lower, lately.') },
-      { id: 'dockhand', look: 'dockhand', x: 20, y: 25, dir: 'down', cond: (st) => st.step < 2, talk: (S) => S.say({ name: 'Dockhand', look: 'dockhand' }, 'Station\'s up top, past the bakery. Can\'t miss it — it\'s the big humming thing.') },
+        dark(st) ? 'I\'ve never seen the Drift this close. I can practically smell the wrecks down there.'
+          : 'I hauled up nothing but fog today. The sky-fish are swimming lower these days. Everything is lower lately.') },
+      { id: 'dockhand', look: 'dockhand', x: 20, y: 25, dir: 'down', cond: (st) => st.step < 2, talk: (S) => S.say({ name: 'Dockhand', look: 'dockhand' }, 'The station\'s up top, past the bakery. You can\'t miss it. It\'s the big humming thing.') },
       // --- after the failure ---
       { id: 'isoldeHurt', look: 'isolde', x: 23, y: 11, dir: 'down', cond: (st) => st.step >= 3, talk: async (S) => {
-        await S.say('isolde', 'Ribs\'ll mend. Harbor might not.');
+        await S.say('isolde', 'My ribs will mend. The harbor might not.');
         await S.say('isolde', 'Go home if you must, girl. But keep your eyes open. And remember what I told you.');
       } },
       { id: 'fennick', look: 'fennick', x: 16, y: 32, dir: 'up', talk: async (S, n, st) => {
-        if (st.step <= 1) return S.say('fennick', 'I\'ll wait right here, Miss Wren. Go do your errand — that crate won\'t deliver itself.');
+        if (st.step <= 1) return S.say('fennick', 'I\'ll wait right here, Miss Wren. Go do your errand. That crate won\'t deliver itself.');
         if (st.step === 3) {
-          await S.say('fennick', 'Whatever happened up there, I\'m taking you home. Let me get the lines untied—');
+          await S.say('fennick', 'Whatever happened up there, I\'m taking you home. Let me get the lines untied.');
           return G.story.pipMeets(S);
         }
         return G.story.fennickDepart(S);
@@ -172,8 +172,8 @@
       if (st.step === 1 && !st.flags.harborArrived) {
         S.flag('harborArrived');
         await S.wait(300);
-        await S.say('wren', 'Pennywhistle Harbor. Bread ovens, paper lanterns and the best view in Orrenth.');
-        await S.say('fennick', 'I\'ll be right here when you\'re done. Station\'s at the top of the hill — just follow the lanterns.');
+        await S.say('wren', 'Pennywhistle Harbor. Bread ovens, paper lanterns, and the best view in Orrenth.');
+        await S.say('fennick', 'I\'ll be right here when you\'re done. The station\'s at the top of the hill. Just follow the lanterns.');
       }
     },
   });

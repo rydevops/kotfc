@@ -14,7 +14,7 @@
   const M7 = () => G.mode7;
 
   const PANELS = [
-    { dur: 7500, text: 'This is Orrenth — a world of islands, held aloft by the Current.' },
+    { dur: 7500, text: 'This is Orrenth, a world of islands held aloft by the Current.' },
     { dur: 7500, text: 'We learned to harness it. Lanterns. Bridges. Ferries across the sky.' },
     { dur: 8000, text: 'But the Current is fading. Lantern by lantern, island by island, the world is sinking toward the deep.' },
     { dur: 7500, text: 'Nineteen years ago, a child was found alone, wrapped in a field of light. Around her neck: a plain brass pendant.' },

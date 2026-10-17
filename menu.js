@@ -58,7 +58,7 @@
           const tabs = $('.menu-tabs', root);
           tabs.style.gridTemplateColumns = 'repeat(4, 1fr)';
           const body = $('.menu-body', root);
-          body.innerHTML = `<div class="flowcard">${G.ui.flowHTML(st().flow, true)}<p>The party's shared Current. Skills spend it; attacks, Guarding and taking hits restore it. Resting at an inn settles it back to zero.</p></div>` +
+          body.innerHTML = `<div class="flowcard">${G.ui.flowHTML(st().flow, true)}<p>The party's shared Current. Skills spend it; attacks, Guarding, and taking hits restore it. Resting at an inn settles it back to zero.</p></div>` +
             st().party.map((m) => memberCard(m, true)).join('') +
             `<p class="objective">◆ ${U.esc(st().objective || 'Explore.')}</p>`;
           const choice = await runList(tabs, [
@@ -287,7 +287,7 @@
       const price = inn.price || 0;
       const yes = await G.ui.choose({ name: inn.name }, inn.greet, [price ? `Rest (${price} gold)` : 'Rest', 'Not now'], { cancel: 1 });
       if (yes !== 0) return false;
-      if (st().gold < price) { G.audio.sfx('error'); await G.ui.say({ name: inn.name }, 'Ah — you\'re a little short, love.'); return false; }
+      if (st().gold < price) { G.audio.sfx('error'); await G.ui.say({ name: inn.name }, 'Ah, you\'re a little short, love.'); return false; }
       st().gold -= price;
       const prev = G.audio.currentSong;
       await G.gfx.fadeOut(600);

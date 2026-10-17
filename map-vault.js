@@ -41,15 +41,15 @@
     ],
     triggers: [
       { x: 11, y: 18, w: 2, h: 1, cond: (st) => st.step === 8, run: async (S) => {
-        await S.narrate('Brass feet clatter beyond the door. The way you came in is crawling with sentries.');
-        await S.say('pip', 'Back stair! Northeast corner! Go go go!');
+        await S.narrate('Brass feet clatter beyond the door. The way they came in is crawling with sentries.');
+        await S.say('pip', 'Back stair! Northeast corner! Go, go, go!');
         await S.move('player', 'U');
       } },
       { x: 18, y: 2, w: 5, h: 3, cond: (st) => st.step === 8, run: (S) => G.story.golem(S) },
     ],
     interact: [
       { x: 4, y: 2, run: (S, st) => (st.step === 7 ? G.story.records(S) : S.narrate('The F drawer hangs open. It is empty now.')) },
-      { x: 20, y: 1, run: (S, st) => S.narrate(st.step >= 8 ? 'The back stair. Night air pours down it.' : 'A narrow back stair, curling up into darkness. A draft smells of rain and engine oil.') },
+      { x: 20, y: 1, run: (S, st) => S.narrate(st.step >= 8 ? 'The back stair. Cold night air pours down it.' : 'A narrow stair curls up into darkness. The draft smells of rain and engine oil.') },
     ],
     chests: [
       { id: 'locket', x: 1, y: 2, item: 'emberLocket' },
@@ -65,8 +65,8 @@
     onEnter: async (S, st) => {
       if (st.step === 7 && !st.flags.vaultIn) {
         S.flag('vaultIn');
-        await S.say('pip', 'Miles of shelves. Okay. Odalys would be filed under F. Probably. Unless they filed her under "Problem".');
-        await S.say('wren', 'Archive records are in the northwest corner. Stay close — the sentries patrol in here too.');
+        await S.say('pip', 'Miles of shelves. Okay. Odalys would be filed under F. Probably. Unless they filed her under "Problem."');
+        await S.say('wren', 'The archive records are in the northwest corner. Stay close. The sentries patrol in here too.');
       }
     },
   });

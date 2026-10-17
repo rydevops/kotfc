@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const G = (window.G = window.G || {});
-  G.VERSION = '1.2.0';
+  G.VERSION = '1.2.1';
   G.TILE = 16;
   G.DEBUG = /[?&]debug/.test(location.search);
 

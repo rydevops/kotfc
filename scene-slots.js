@@ -43,7 +43,7 @@
         if (ok) return G.newGame(v.i);
         return this.show();
       }
-      const c = await G.ui.choose(null, `Slot ${v.i} — Wren, Lv ${v.info.lvl}, ${v.info.place}.`, ['Continue', 'Delete', 'Back'], { cancel: 2 });
+      const c = await G.ui.choose(null, `Slot ${v.i}: Wren, Lv ${v.info.lvl}, ${v.info.place}.`, ['Continue', 'Delete', 'Back'], { cancel: 2 });
       if (c === 0) {
         G.game.state = G.game.load(v.i);
         G.audio.sfx('save');

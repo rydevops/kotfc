@@ -26,14 +26,28 @@
     });
   }
 
+  /* "Brass Sentries appear!" · "Brass Sentry and Lantern Mite appear!" · "Wisp appears!" */
+  function plural(name) {
+    if (/[^aeiou]y$/i.test(name)) return name.slice(0, -1) + 'ies';
+    if (/(s|x|z|ch|sh)$/i.test(name)) return name + 'es';
+    return name + 's';
+  }
+  function encounterLine(enemies) {
+    const counts = new Map();
+    for (const e of enemies) counts.set(e.data.name, (counts.get(e.data.name) || 0) + 1);
+    const parts = [...counts].map(([n, c]) => (c > 1 ? plural(n) : n));
+    const list = parts.length > 2 ? parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] : parts.join(' and ');
+    return `${list} ${enemies.length > 1 ? 'appear' : 'appears'}!`;
+  }
+
   /* ======================= Boss mechanics ======================= */
   const BOSS_MECHANICS = (G.BOSS_MECHANICS = {
     guardian: {
       async onStart(b, e) {
         if (!b.opts.tutorial) return;
-        await b.ui.tip('The ~Flow meter~ at the top is the Current around you — shared by the whole party.');
+        await b.ui.tip('The ~Flow meter~ at the top shows the Current around you, shared by the whole party.');
         await b.ui.tip('Basic attacks and Guarding add Flow. Getting hit adds Flow too. Skills *spend* it.');
-        await b.ui.tip('Cast a skill without enough Flow and you *Overdraw*: a ~Surge~ hurts everyone. This guardian feeds on Surges!');
+        await b.ui.tip('If you cast a skill without enough Flow, you *Overdraw*, and a ~Surge~ hurts everyone. This guardian feeds on Surges!');
       },
       chooseMove(b, e) { return b.round % 3 === 0 ? e.data.moves[1] : e.data.moves[0]; },
       async onSurge(b, e) {
@@ -47,7 +61,7 @@
         await b.ui.msg('A Ward Shell of woven Current shields the golem!', 1000);
         if (!b.st.flags.golemTip) {
           b.st.flags.golemTip = true;
-          await b.ui.tip('Cog bleeps: the shell drinks *unspent* Current. Spend ~Flow~ on a skill to shatter it!');
+          await b.ui.tip('Cog bleeps: "The shell drinks *unspent* Current! Spend ~Flow~ on a skill to shatter it!"');
         }
       },
       chooseMove(b, e) { return b.round % 3 === 0 ? e.data.moves[1] : e.data.moves[0]; },
@@ -75,7 +89,7 @@
   /* ======================= Rift effects (Surge) ======================= */
   const RIFT_EFFECTS = [
     { name: 'Rift Bloom', text: 'Petals of light fall. The party recovers!', async run(b) { for (const c of b.party.filter((c) => c.alive)) b.heal(c, Math.round(c.maxhp * 0.15)); } },
-    { name: 'Mirror Rift', text: 'The rift mirrors the pain back... the enemies recover!', async run(b) { for (const c of b.enemies.filter((c) => c.alive)) b.heal(c, Math.round(c.maxhp * 0.1)); } },
+    { name: 'Mirror Rift', text: 'The rift mirrors the pain back, and the enemies recover!', async run(b) { for (const c of b.enemies.filter((c) => c.alive)) b.heal(c, Math.round(c.maxhp * 0.1)); } },
     { name: 'Static Rain', text: 'The Flow meter scrambles!', async run(b) { b.setFlow(U.randInt(1, 7)); } },
     { name: 'Starfall', text: 'A shard of sky falls!', async run(b) { const t = U.pick(b.all().filter((c) => c.alive)); if (t) await b.applyDamage(null, t, Math.round(t.maxhp * 0.15), { fx: 'stars' }); } },
     { name: 'Rift Fog', text: 'A fog of torn space blinds everyone!', async run(b) { for (const c of b.all().filter((c) => c.alive)) c.status.blind = 1; } },
@@ -182,7 +196,7 @@
       B.ui.build(b);
       b.layout();
       const names = [...new Set(b.enemies.map((e) => e.data.name))];
-      await b.ui.msg(opts.introText || (b.enemies.some((e) => e.data.boss) ? `${names[0]} blocks the way!` : `${names.join(' and ')} ${b.enemies.length > 1 ? 'appear' : 'appears'}!`), 900);
+      await b.ui.msg(opts.introText || (b.enemies.some((e) => e.data.boss) ? `${names[0]} blocks the way!` : encounterLine(b.enemies)), 900);
       for (const e of b.enemies) { const mech = BOSS_MECHANICS[e.data.mechanic]; if (mech && mech.onStart) await mech.onStart(b, e); }
       if (opts.onStart) await opts.onStart(b);
 
@@ -500,8 +514,8 @@
         const quips = [
           'Cog: "It\'s ugly AND squishy. Hit the squishy bit."',
           'Cog: "Weak point located. It\'s the whole thing, honestly."',
-          'Cog: "I\'m a lantern, not a miracle. But yes. There."',
-          'Cog: "Oh look, a monster. My favourite. Not."',
+          'Cog: "I\'m a lantern, not a miracle. But yes, there."',
+          'Cog: "Oh, look, a monster. My favorite. Not."',
           'Cog: "Defenses down. You\'re welcome. Tips appreciated."',
         ];
         await this.ui.msg(`${t.name} — HP ${t.hp}/${t.maxhp}. ${t.data.desc || ''}`, 1500);
@@ -511,15 +525,15 @@
           t.stolen = true;
           G.game.addItem(t.data.steal, 1);
           G.audio.sfx('buy');
-          await this.ui.msg(`Stole ${G.data.items[t.data.steal].name}!`, 800);
+          await this.ui.msg(`${actor.name} stole ${G.data.items[t.data.steal].name}!`, 800);
         } else {
           this.addFlow(2);
-          await this.ui.msg(`Vesper skims a little Current instead. (+2 Flow)`, 800);
+          await this.ui.msg(`${actor.name} skims a little Current instead. (+2 Flow)`, 800);
         }
       } else if (id === 'listen') {
         this.listened = true;
         const lines = this.enemies.filter((e) => e.alive).map((e) => `${e.name}: ${e.intent ? e.intent.name : '...'}`);
-        await this.ui.msg('Hollis listens... ' + lines.join(' · '), 1600);
+        await this.ui.msg(`${actor.name} listens... ` + lines.join(' · '), 1600);
       } else if (id === 'voice') {
         this.setFlow(5);
         for (const e of this.enemies.filter((e) => e.alive && e.data.family === 'rift')) e.status.calmed = 1;

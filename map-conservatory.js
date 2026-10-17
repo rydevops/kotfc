@@ -66,12 +66,12 @@
     interact: [
       { x: 6, y: 5, bump: true, cond: (st) => !st.flags.vaultOpen, run: (S) => S.narrate('THE RECORDS VAULT. Sealed. The lock hums with Current and does not care how politely you ask.') },
       { x: 3, y: 17, bump: true, run: async (S, st) => {
-        if (st.step >= 8) return S.narrate('Sentries are already searching the dormitories. Not tonight.');
+        if (st.step >= 8) return S.narrate('Sentries are already searching the dormitories. It would be foolish to go back there tonight.');
         await S.inn('dormBed');
       } },
-      { x: 36, y: 17, bump: true, run: (S) => S.narrate('The lecture hall is locked. Through the keyhole: rows of empty desks, and a chalkboard that just says "RESONANCE IS LISTENING".') },
-      { x: 20, y: 20, run: (S, st) => S.narrate(day(st) ? 'The star globe. It used to spin on its own. Now it wobbles, as if it\'s forgotten how.' : 'The star globe has stopped turning altogether.') },
-      { x: 4, y: 7, run: (S) => S.narrate('"Records Vault — Authorised Archivists Only." Someone has scratched underneath: "and Cassian".') },
+      { x: 36, y: 17, bump: true, run: (S) => S.narrate('The lecture hall is locked. Through the keyhole: rows of empty desks and a chalkboard that reads "RESONANCE IS LISTENING."') },
+      { x: 20, y: 20, run: (S, st) => S.narrate(day(st) ? 'The star globe. It used to spin on its own. Now it wobbles, as if it has forgotten how.' : 'The star globe has stopped turning altogether.') },
+      { x: 4, y: 7, run: (S) => S.narrate('"Records Vault: Authorized Archivists Only." Someone has scratched underneath: "...and Cassian."') },
     ],
     chests: [
       { id: 'eastNook', x: 39, y: 18, item: 'lanternOil', qty: 2 },
@@ -87,7 +87,7 @@
     ],
     npcs: [
       { id: 'quartermaster', look: 'quartermaster', x: 2, y: 21, dir: 'down', talk: async (S, n, st) => {
-        if (night(st)) await S.say({ name: 'Quartermaster Bell', look: 'quartermaster' }, 'Stores are closed— oh. It\'s you. Quick, then, before a sentry sees.');
+        if (night(st)) await S.say({ name: 'Quartermaster Bell', look: 'quartermaster' }, 'The stores are closed—oh. It\'s you. Quick, then, before a sentry sees you.');
         await S.shop('quartermaster');
       } },
       // daytime
@@ -103,17 +103,17 @@
         await S.say('neve', 'Be careful what you ask him, Wren.');
       } },
       { id: 'scholar', look: 'scholar', x: 35, y: 24, dir: 'up', cond: day, talk: (S) => S.say({ name: 'Professor Halloway', look: 'scholar' },
-        'Resonance, young lady, is not about power. It is about *listening*. "RES" on your exam sheets — the deeper it runs, the stronger your spells and the less a Surge can hurt you.') },
-      { id: 's1', look: 'student1', x: 14, y: 22, dir: 'down', wander: 2, cond: day, talk: (S) => S.say({ name: 'Student', look: 'student1' }, 'Did you hear? Halloway\'s lamp went out mid-lecture. TWICE. He blamed the weather.') },
-      { id: 's2', look: 'student2', x: 25, y: 18, dir: 'left', cond: day, talk: (S) => S.say({ name: 'Student', look: 'student2' }, 'The north bridge went see-through for a second this morning. I\'m taking the long way round from now on.') },
-      { id: 's3', look: 'student1', x: 22, y: 34, dir: 'down', cond: day, talk: (S) => S.say({ name: 'Ferry clerk', look: 'student1' }, 'Last ferry of the night. You\'re lucky — they\'ve cancelled half the routes this week.') },
+        'Resonance, young lady, is not about power. It is about *listening*. The "RES" on your exam sheets measures it: the deeper it runs, the stronger your spells and the less a Surge can hurt you.') },
+      { id: 's1', look: 'student1', x: 14, y: 22, dir: 'down', wander: 2, cond: day, talk: (S) => S.say({ name: 'Student', look: 'student1' }, 'Did you hear? Professor Halloway\'s lamp went out in the middle of his lecture. TWICE. He blamed the weather.') },
+      { id: 's2', look: 'student2', x: 25, y: 18, dir: 'left', cond: day, talk: (S) => S.say({ name: 'Student', look: 'student2' }, 'The north bridge went see-through for a second this morning. I\'m taking the long way around from now on.') },
+      { id: 's3', look: 'student1', x: 22, y: 34, dir: 'down', cond: day, talk: (S) => S.say({ name: 'Ferry clerk', look: 'student1' }, 'That was the last ferry of the night. You\'re lucky. They\'ve canceled half the routes this week.') },
     ],
     onEnter: async (S, st) => {
       if (st.step === 5 && !st.flags.consArrived) {
         S.flag('consArrived');
         await S.wait(300);
-        await S.say('pip', 'Whoa. The bridges are *woven*. Out of actual Current! Odalys used to talk about this place like it was a cathedral.');
-        await S.say('wren', 'They used to be solid as stone. Now look at them. They flicker.');
+        await S.say('pip', 'Whoa. The bridges are *woven* out of actual Current! Odalys used to talk about this place like it was a cathedral.');
+        await S.say('wren', 'They used to be as solid as stone. Now look at them. They flicker.');
         await S.say('wren', 'Aldrith\'s tower is across the north bridge. Come on.');
         S.objective('Report to Aldrith in his tower, across the north bridge.');
       }
