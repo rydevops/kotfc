@@ -7,8 +7,11 @@ No build step and no libraries. The pixel art is authored as text inside the cod
 effects are synthesised, and every file lives in the root folder (the only binary assets are the icons and the
 bundled DotGothic16 pixel font, licensed under the SIL Open Font License).
 
-**Act I: The Lantern Falls** is fully playable: the intro cutscene, Pennywhistle Harbor, the tap-station failure,
-Pip and Cog joining, the Astral Conservatory, Aldrith's study, the Records Vault and the escape.
+**The whole story is playable, from the opening to the final lantern.** Act I: the Harbor, the Conservatory and the
+escape. Act II: Hullhaven, Tallow Cay and Dimmerrow, with Vesper and Hollis joining. Act III: Hushwell, the
+Quiet Heron (your airship, with a helm for choosing where to sail) and the drowned city of Aurelith. Act IV: the
+Foundry beneath the Drift, the three vaults, the Founder's Key, the Core and the ending. Short bond scenes with
+your companions play after resting at inns and in the Heron's bunks.
 
 ---
 
@@ -134,7 +137,7 @@ scenery above the horizon and a `floor` texture, then use it as `battleBg` on a 
 **A song:** add an entry to `music.js` with a chord progression and a melody. The engine writes the bass, arpeggios
 and drums from pattern names.
 
-**A boss mechanic:** add an entry to `G.BOSS_MECHANICS` in `battle.js`, and set `mechanic: '<name>'` on the mob.
+**A boss mechanic:** add an entry to `G.BOSS_MECHANICS` in `bosses.js`, and set `mechanic: '<name>'` on the mob.
 The hooks are `onStart`, `chooseMove`, `onFlowSpent`, `onSurge`, `onRoundEnd` and `modifyDamageTaken`.
 
 ### Debug mode
@@ -146,4 +149,10 @@ Add `&skipintro` to jump straight to the title screen.
 ### Saving
 
 There are three save slots, stored in the browser's `localStorage`. You can save from the ☰ menu or at any inn,
-and the game also saves automatically when you start a new journey and at the end of Act I.
+and the game also saves automatically when you start a new journey and at the end of each act and the ending.
+
+### Story files
+
+`story-act1.js` … `story-act4.js` hold the cutscenes (Act II and III are split into `2`, `2b`, `2c`, `3`, `3b`), the
+`map-*.js` files hold the places, `travel.js` holds the sea and sky travel menu and the Heron's deck, and
+`story-bonds.js` holds the rest-time companion scenes (`G.bonds.add({ id, step, who, run })`).

@@ -351,9 +351,7 @@
     await S.say('cog', 'Bleep.');
     await S.say('pip', 'Cog agrees. Grudgingly.');
     S.setStep(10);
-    S.st.chapter = 'Act II';
-    S.st.objective = 'Descend into the Drift. (Act II: The Hunt — coming soon)';
     G.game.save();
-    await G.scenes.go('actEnd', {}, { fadeMs: 1200 });
+    return G.story.hullArrive(S);
   };
 })();

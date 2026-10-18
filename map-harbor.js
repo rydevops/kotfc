@@ -5,7 +5,7 @@
    ========================================================================= */
 (function () {
   'use strict';
-  const dark = (st) => st.step >= 2;
+  const dark = (st) => st.step >= 2 && !st.flags.restored;
 
   function drawStation(ctx, x, y, t, w) {
     const broken = w.st.flags.stationBroken;
@@ -113,7 +113,7 @@
       { id: 'gardenE', x: 28, y: 23, item: 'luckyButton' },
     ],
     encounters: {
-      cond: (st) => st.step >= 3, where: 'all', rate: 0.035, grassRate: 0.12, bg: 'harborDark',
+      cond: (st) => st.step >= 3 && !st.flags.restored, where: 'all', rate: 0.035, grassRate: 0.12, bg: 'harborDark',
       troops: [
         { mobs: ['riftWisp'], w: 3 }, { mobs: ['riftWisp', 'riftWisp'], w: 3 },
         { mobs: ['seamCrawler'], w: 2 }, { mobs: ['riftWisp', 'seamCrawler'], w: 2 }, { mobs: ['stormmoth', 'stormmoth'], w: 2 },
@@ -155,11 +155,13 @@
           : 'I hauled up nothing but fog today. The sky-fish are swimming lower these days. Everything is lower lately.') },
       { id: 'dockhand', look: 'dockhand', x: 20, y: 25, dir: 'down', cond: (st) => st.step < 2, talk: (S) => S.say({ name: 'Dockhand', look: 'dockhand' }, 'The station\'s up top, past the bakery. You can\'t miss it. It\'s the big humming thing.') },
       // --- after the failure ---
-      { id: 'isoldeHurt', look: 'isolde', x: 23, y: 11, dir: 'down', cond: (st) => st.step >= 3, talk: async (S) => {
+      { id: 'isoldeHurt', look: 'isolde', x: 23, y: 11, dir: 'down', cond: (st) => st.step >= 3, talk: async (S, n, st) => {
+        if (st.flags.restored) return S.say('isolde', 'Half the harbor it was, and twice as stubborn. That will do. Thirty years flying airships, and the best landing I ever made was this one.');
         await S.say('isolde', 'My ribs will mend. The harbor might not.');
         await S.say('isolde', 'Go home if you must, girl. But keep your eyes open. And remember what I told you.');
       } },
       { id: 'fennick', look: 'fennick', x: 16, y: 32, dir: 'up', talk: async (S, n, st) => {
+        if (st.flags.restored) return S.say('fennick', 'Ferries run again, Miss Wren. Every route, every day. And the lanterns burn *brighter* than I remember, or my eyes are better. I prefer the first one.');
         if (st.step <= 1) return S.say('fennick', 'I\'ll wait right here, Miss Wren. Go do your errand. That crate won\'t deliver itself.');
         if (st.step === 3) {
           await S.say('fennick', 'Whatever happened up there, I\'m taking you home. Let me get the lines untied.');

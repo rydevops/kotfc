@@ -204,6 +204,8 @@
         b.round++;
         b.listened = false;
         for (const e of b.enemies) if (e.alive) e.intent = b.chooseMove(e);
+        for (const e of b.enemies.slice()) { const mech = BOSS_MECHANICS[e.data.mechanic]; if (mech && mech.onRoundStart && e.alive) await mech.onRoundStart(b, e); }
+        if (b.outcome()) return b.finish(b.outcome());
         b.ui.refresh();
         const order = b.all().filter((c) => c.alive).map((c) => ({ c, k: c.spd * U.rand(0.85, 1.15) + (c.side === 'party' ? 0.5 : 0) })).sort((a, z) => z.k - a.k).map((o) => o.c);
         for (const actor of order) {
@@ -236,6 +238,8 @@
           }
           b.active = null;
           b.ui.refresh();
+          for (const e of b.enemies.slice()) { const mech = BOSS_MECHANICS[e.data.mechanic]; if (mech && mech.onAfterAct) await mech.onAfterAct(b, e, actor); }
+          if (b.opts.onAfterAct) await b.opts.onAfterAct(b, actor);
           if (b.outcome()) return b.finish(b.outcome());
         }
         // end of round
@@ -244,7 +248,7 @@
           c.status[k]--;
           if (c.status[k] <= 0) delete c.status[k];
         }
-        for (const e of b.enemies) { const mech = BOSS_MECHANICS[e.data.mechanic]; if (mech && mech.onRoundEnd && e.alive) await mech.onRoundEnd(b, e); }
+        for (const e of b.enemies.slice()) { const mech = BOSS_MECHANICS[e.data.mechanic]; if (mech && mech.onRoundEnd && e.alive) await mech.onRoundEnd(b, e); }
         if (opts.onRoundEnd) await opts.onRoundEnd(b);
         const out = b.outcome();
         if (out) return b.finish(out);
@@ -274,7 +278,7 @@
       this.enemies.forEach((e, i) => {
         e.w = e.sprite.width; e.h = e.sprite.height;
         let [sx, sy] = slots[i % slots.length];
-        if (e.data.boss) { sx = 0.34; sy = 0.78; }
+        if (e.data.boss && !this.opts.noBossSlot) { sx = 0.34; sy = 0.78; }
         const feet = floorTop + sy * floorH;
         e.x = Math.round(Math.max(e.w / 2 + 2, W * sx));
         e.feet = Math.round(Math.min(fh - 4, feet));
@@ -289,7 +293,25 @@
         c.y = c.feet - 13;
       });
     },
+    /* add a combatant mid-fight (summons, echoes, swarm spawn) */
+    addEnemy(id, o = {}) {
+      const e = enemyCombatant(id, o.suffix || '');
+      if (o.name) e.name = o.name;
+      Object.assign(e, o.props || {});
+      this.enemies.push(e);
+      this.layout();
+      e.blinkT = 400;
+      e.intent = this.chooseMove(e);
+      this.ui.refresh();
+      return e;
+    },
+    removeEnemy(e, silent) {
+      e.hp = 0;
+      if (silent) { e.dying = true; e.dieT = 0; } 
+      this.ui.refresh();
+    },
     outcome() {
+      if (this.forceEnd) return this.forceEnd;
       if (!this.enemies.some((e) => e.alive)) return 'win';
       if (!this.party.some((c) => c.alive)) return 'lose';
       return null;
@@ -433,7 +455,7 @@
         await sleep(500);
         return;
       }
-      if (act.type === 'skill') return this.castSkill(actor, act.skill, act.target);
+      if (act.type === 'skill') { try { return await this.castSkill(actor, act.skill, act.target); } finally { this.curSkill = null; } }
     },
 
     retarget(t, group) {
@@ -444,6 +466,7 @@
 
     async castSkill(actor, sk, target) {
       const st = this.st;
+      this.curSkill = sk;
       actor.mp -= sk.mp;
       // ---- Flow accounting ----
       let mult = 1, surge = false;
@@ -485,13 +508,21 @@
           await this.skillHit(actor, sk, t, mult);
         } else if (sk.kind === 'heal') {
           const amt = Math.round((sk.power + actor.res * 1.4) * U.rand(0.95, 1.05) * mult);
-          if (!t.alive) { await this.ui.msg(`${t.name} can't be reached by healing.`, 600); continue; }
+          if (!t.alive) {
+            if (!sk.revive) { await this.ui.msg(`${t.name} can't be reached by healing.`, 600); continue; }
+            t.hp = 1; t.status = {};
+            this.heal(t, Math.max(1, Math.round(t.maxhp * sk.revive) - 1));
+            await this.ui.msg(`${t.name} is back on their feet!`, 700);
+            continue;
+          }
           this.heal(t, amt);
         } else if (sk.kind === 'status') {
           const sid = sk.status.id;
           if (t.data && t.data.immune && t.data.immune.includes(sid)) { await this.ui.msg(`${t.name} shrugs it off!`, 700); continue; }
           t.status[sid] = sk.status.turns + (sid === 'ward' ? 1 : 0);
           G.audio.sfx('status');
+          const mech = t.data && BOSS_MECHANICS[t.data.mechanic];
+          if (mech && mech.onStatus) await mech.onStatus(this, t, sid, actor);
         }
         if (sk.special) await this.special(sk.special, actor, t);
         await sleep(120);
@@ -714,9 +745,10 @@
       if (!alive.length) return;
       // lightly prefer wounded targets
       const pickTarget = () => (Math.random() < 0.3 ? alive.slice().sort((a, b) => a.hp / a.maxhp - b.hp / b.maxhp)[0] : U.pick(alive));
-      const targets = mv.target === 'all' ? alive : [pickTarget()];
+      const targets = mv.target === 'all' ? alive : [mv.chosen && mv.chosen.alive ? mv.chosen : pickTarget()];
       this.ui.spell(mv.name, '#ffffff', false);
       await this.stepIn(e);
+      if (mv.kind === 'custom') { await mv.run(this, e, targets); await sleep(200); return; }
       let hitAny = false;
       for (const t of targets) {
         if (!t.alive) continue;

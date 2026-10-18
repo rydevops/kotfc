@@ -123,7 +123,8 @@
     lightsByDistance(fromX, fromY) {
       return W().lights.filter((l) => l.lamp).sort((a, b) => Math.hypot(a.x - fromX * 16, a.y - fromY * 16) - Math.hypot(b.x - fromX * 16, b.y - fromY * 16));
     },
-    camera(x, y) { W().camTarget = x == null ? null : { x: x * 16 + 8, y: y * 16 + 8 }; },
+    setTile(x, y, ch) { W().setTile(x, y, ch); },
+        camera(x, y) { W().camTarget = x == null ? null : { x: x * 16 + 8, y: y * 16 + 8 }; },
     async tween(fn, ms) {
       const t0 = performance.now();
       return new Promise((res) => {
@@ -145,7 +146,11 @@
 
     /* --- services --- */
     shop: (id) => G.menu.shop(id),
-    inn: (id) => G.menu.inn(id),
+    async inn(id) {
+      const ok = await G.menu.inn(id);
+      if (ok && G.bonds) await G.bonds.check(S);
+      return ok;
+    },
     save() { G.game.save(); G.audio.sfx('save'); G.ui.toast('Game saved.'); },
   });
 

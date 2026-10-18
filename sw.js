@@ -1,15 +1,15 @@
 /* sw.js — offline support. Network first (so updates on GitHub Pages show
    up right away), falling back to the cache when offline.
    Bump CACHE when you release a new version. */
-const CACHE = 'fading-current-v5';
+const CACHE = 'fading-current-v6';
 const FILES = [
   './', 'index.html', 'style-base.css', 'style-ui.css', 'style-battle.css',
   'font-dotgothic.woff2',
-  'core.js', 'gfx.js', 'pix.js', 'art.js', 'font.js', 'input.js', 'audio.js', 'music.js', 'ui.js', 'state.js',
-  'sprites-chars.js', 'sprites-battle.js', 'sprites-mobs.js', 'tiles.js', 'sky.js', 'terrain.js', 'backdrops.js', 'mode7.js',
-  'data-party.js', 'data-items.js', 'data-mobs.js', 'data-shops.js',
-  'map-ferry.js', 'map-harbor.js', 'map-conservatory.js', 'map-study.js', 'map-vault.js', 'story-act1.js',
-  'script.js', 'world.js', 'fx.js', 'battle.js', 'battle-ui.js', 'menu.js',
+  'core.js', 'gfx.js', 'pix.js', 'art.js', 'font.js', 'input.js', 'audio.js', 'music.js', 'music-more.js', 'ui.js', 'state.js',
+  'sprites-chars.js', 'sprites-battle.js', 'sprites-mobs.js', 'tiles.js', 'tiles-more.js', 'sky.js', 'terrain.js', 'backdrops.js', 'backdrops-more.js', 'mode7.js',
+  'data-party.js', 'data-items.js', 'data-mobs.js', 'data-shops.js', 'data-more.js', 'mapkit.js', 'travel.js',
+  'map-ferry.js', 'map-harbor.js', 'map-conservatory.js', 'map-study.js', 'map-vault.js', 'map-hullhaven.js', 'map-tallow.js', 'map-dimmerrow.js', 'map-hushwell.js', 'map-aurelith.js', 'map-foundry.js', 'story-act1.js', 'story-act2.js', 'story-act2b.js', 'story-act2c.js', 'story-act3.js', 'story-act3b.js', 'story-act4.js', 'story-bonds.js',
+  'script.js', 'world.js', 'fx.js', 'battle.js', 'bosses.js', 'battle-ui.js', 'menu.js',
   'scene-boot.js', 'scene-intro.js', 'scene-title.js', 'scene-slots.js', 'scene-actend.js', 'main.js',
   'manifest.json', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
 ];

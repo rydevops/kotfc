@@ -185,7 +185,7 @@
 .actend { position: absolute; inset: 0; background: rgba(0, 0, 16, 0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; gap: 18px; }
 .roll { animation: logoIn 2.4s ease-out; }
 @keyframes logoIn { from { opacity: 0; } }
-.actend h1 { font-size: 48px; margin: 0; color: #fff; font-weight: 400; letter-spacing: 3px; text-shadow: 4px 4px 0 #1a2070; }
+.actend h1 { font-size: clamp(28px, 9vw, 48px); margin: 0; color: #fff; font-weight: 400; letter-spacing: 3px; text-shadow: 4px 4px 0 #1a2070; }
 .actend h2 { margin: 0 0 18px; font-weight: 400; color: var(--current); }
 .ae-sub { letter-spacing: 6px; color: var(--muted); text-transform: uppercase; margin: 0; }
 .ae-line { color: #e0e4ff; max-width: 420px; margin: 0 auto 18px; }

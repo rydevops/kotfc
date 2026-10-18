@@ -625,6 +625,12 @@
       const look = mob.art.slice(5);
       const b = G.sprites.battler(look, 'none');
       c = G.gfx.flipH(b.stand);
+      if (mob.upscale && mob.upscale > 1) {
+        const k = mob.upscale, big = G.gfx.makeCanvas(c.width * k, c.height * k);
+        big.x.imageSmoothingEnabled = false;
+        big.x.drawImage(c, 0, 0, c.width * k, c.height * k);
+        c = big.c;
+      }
     } else {
       const a = ART[mob.art] || ART.wisp;
       const natural = a.mask[0].length * 2;

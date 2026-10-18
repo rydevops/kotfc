@@ -63,12 +63,8 @@
       { id: 'fennick', look: 'fennick', x: 6, y: 8, dir: 'up', cond: (st) => st.step < 9,
         talk: async (S) => S.say('fennick', S.step() === 0 ? 'Nearly there, Miss Wren!' : 'Steady as she goes. The wind has been thin up here lately.') },
     ],
-    interact: [
-      { x: 6, y: 8, cond: (st) => st.step >= 10, run: async (S) => S.narrate('The skiff drifts on, down toward the Drift\'s mist. (Act II: The Hunt is coming soon!)') },
-    ],
     onEnter: async (S, st) => {
       if (st.step === 0) return G.story.ferryOpening(S);
-      if (st.step >= 10) G.ui.toast('Act I complete! Act II is on its way.');
     },
   });
 })();

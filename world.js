@@ -35,6 +35,7 @@
       this.H = this.grid.length;
       this.W = Math.max(...def.tiles.map((r) => r.length));
       this.grid.forEach((r) => { while (r.length < this.W) r.push(' '); });
+      if (def.setup) def.setup(st, this.grid);
       st.map = mapId; st.x = x; st.y = y; st.dir = dir || st.dir;
       this.refreshEnv();
       this.buildLayer();
@@ -523,6 +524,23 @@
           const x = ((U.hash(i, 2) * W + t * sp * 0.4) % W + W) % W;
           const y = ((U.hash(i, 3) * Hh + Math.sin(t / 1200 + i) * 20) % Hh + Hh) % Hh;
           ctx.fillStyle = '#9ae8ff'; ctx.globalAlpha = 0.35 + 0.35 * Math.sin(t / 400 + i); ctx.fillRect(x, y, 1, 1);
+        } else if (w === 'fog') {
+          const x = ((U.hash(i, 2) * (W + 80) + t * sp * 0.5) % (W + 80) + W + 80) % (W + 80) - 40;
+          const y = (U.hash(i, 3) * Hh + Math.sin(t / 2500 + i) * 10 + Hh) % Hh;
+          ctx.fillStyle = '#c8d0cc'; ctx.globalAlpha = 0.07 + 0.05 * Math.sin(t / 900 + i);
+          ctx.fillRect(x, y, 34 + (i % 4) * 12, 5 + (i % 3) * 2);
+        } else if (w === 'petals') {
+          const x = ((U.hash(i, 2) * W + t * sp * 0.35 + Math.sin(t / 700 + i) * 10) % W + W) % W;
+          const y = ((t * sp * 0.45 + U.hash(i, 3) * Hh) % Hh);
+          ctx.fillStyle = i % 2 ? '#ffc0d4' : '#ffe8f0'; ctx.globalAlpha = 0.8; ctx.fillRect(x, y, 2, 1);
+        } else if (w === 'bubbles') {
+          const x = ((U.hash(i, 2) * W + Math.sin(t / 600 + i) * 5) % W + W) % W;
+          const y = Hh - ((t * sp * 0.4 + U.hash(i, 3) * Hh) % Hh);
+          ctx.fillStyle = '#bff8f0'; ctx.globalAlpha = 0.5; ctx.fillRect(x, y, 1, 1); ctx.fillRect(x - 1, y + 1, 1, 1); ctx.fillRect(x + 1, y + 1, 1, 1); ctx.fillRect(x, y + 2, 1, 1);
+        } else if (w === 'sparks') {
+          const x = ((U.hash(i, 2) * W + Math.sin(t / 300 + i) * 6) % W + W) % W;
+          const y = Hh - ((t * sp * 1.4 + U.hash(i, 3) * Hh) % Hh);
+          ctx.fillStyle = i % 3 ? '#ff9a30' : '#ffe080'; ctx.globalAlpha = 0.8; ctx.fillRect(x, y, 1, 1);
         } else if (w === 'ash') {
           const x = ((U.hash(i, 2) * W - t * sp * 0.6) % W + W) % W;
           const y = ((t * sp * 0.5 + U.hash(i, 3) * Hh) % Hh);
@@ -548,6 +566,12 @@
       }
     },
     npc(id) { return this.npcs.find((n) => n.id === id); },
+    setTile(x, y, ch) {
+      if (!this.grid[y]) return;
+      this.grid[y][x] = ch;
+      this.buildLayer();
+      this.collectLights();
+    },
   });
 
   // wooden pier posts under docks, with cross-braces
