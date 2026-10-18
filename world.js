@@ -620,7 +620,9 @@
       if (world.pendingEnter && G.scenes.name === 'world') {
         world.pendingEnter = false;
         const onEnter = world.def.onEnter;
-        if (onEnter) G.script.run((S) => onEnter(S, G.game.state));
+        // Saves made at the end of Act I (before Act II existed) sit at step 10: carry on to Hullhaven.
+        if (G.game.state.step === 10 && G.story && G.story.hullArrive) G.script.run((S) => G.story.hullArrive(S));
+        else if (onEnter) G.script.run((S) => onEnter(S, G.game.state));
       }
     },
     render(ctx) { world.render(ctx); },
