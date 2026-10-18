@@ -1,7 +1,7 @@
 /* sw.js — offline support. Network first (so updates on GitHub Pages show
    up right away), falling back to the cache when offline.
    Bump CACHE when you release a new version. */
-const CACHE = 'fading-current-v4';
+const CACHE = 'fading-current-v5';
 const FILES = [
   './', 'index.html', 'style-base.css', 'style-ui.css', 'style-battle.css',
   'font-dotgothic.woff2',

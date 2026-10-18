@@ -180,10 +180,13 @@
         };
         const pick = (i) => {
           if (items[i].disabled) return G.audio.sfx('error');
+          // opts.onPick: tapping selects / opens something instead of ending the list
+          if (opts.onPick) { opts.onPick(items[i], i); return; }
           G.audio.sfx('confirm');
           end(items[i].value);
         };
         const handler = G.input.push((b) => {
+          if (opts.onKey && opts.onKey(b, focus)) return true; // the caller can claim a button
           if (b === 'up') setFocus(focus - cols);
           else if (b === 'down') setFocus(focus + cols);
           else if (b === 'left' && cols > 1) setFocus(focus - 1);
@@ -195,6 +198,7 @@
         handler.modal = true;
         // close via external call (e.g. a back button)
         container._cancel = () => { if (canCancel) { G.audio.sfx('cancel'); end(opts.cancel); } };
+        container._end = end; // end the list silently with any value (used to refresh in place)
         const first = items.findIndex((it) => !it.disabled);
         setFocus(opts.start != null ? opts.start : Math.max(0, first), true);
       });

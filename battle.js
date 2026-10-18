@@ -852,6 +852,8 @@
     b: null,
     enter(p) { this.b = p.b; },
     exit() {},
+    // rotating or resizing mid-fight: put everyone back on the (new) floor
+    onResize() { const b = this.b; if (b && b.layout && b.ui) { try { b.layout(); } catch (e) { /* UI not built yet */ } } },
     update(dt) {
       const b = this.b;
       if (!b) return;
@@ -955,4 +957,5 @@
       ctx.restore();
     },
   });
+  G.on('resize', () => { if (G.scenes.name === 'battle') G.scenes.get('battle').onResize(); });
 })();

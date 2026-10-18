@@ -102,7 +102,7 @@
 .menu-tabs { border-bottom: 2px solid rgba(255, 255, 255, 0.18); padding-bottom: 6px; }
 .menu-tabs .item { justify-content: center; padding: 6px 4px 6px 18px; font-size: 15px; min-height: 36px; }
 .menu-tabs .item.focus::before { width: 18px; height: 13px; margin-top: -6px; left: 0; }
-.menu-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 2px; }
+.menu-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; padding: 2px; }
 .menu-desc { min-height: 20px; font-size: 14px; color: var(--muted); padding: 0 4px; }
 .menu-body h4 { margin: 12px 0 4px; color: var(--gold); font-weight: 400; font-size: 15px; letter-spacing: 2px; }
 .menu-body p { margin: 6px 2px; font-size: 15px; }
@@ -201,3 +201,37 @@
   text-shadow: 0 2px 0 #9aa8e0, 3px 3px 0 #1a2070, -2px -2px 0 #1a2070, 2px -2px 0 #1a2070, -2px 2px 0 #1a2070, 0 0 18px rgba(111, 243, 255, 0.45);
 }
 .title .tap-start { bottom: calc(var(--safe-b) + 16vh); text-shadow: 2px 2px 0 #10164a, -2px -2px 0 #10164a, 2px -2px 0 #10164a, -2px 2px 0 #10164a; }
+
+/* ---------------- Shop quantity bar & item pop-up ---------------- */
+.list .item.dim .l, .list .item.dim .r { color: var(--dim); }
+.menu-desc { min-height: 38px; line-height: 1.35; }
+.menu-desc b { color: var(--gold); font-weight: 400; }
+.qtybar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 8px;
+  background: rgba(0, 0, 40, 0.4); border: 1px solid var(--win-inner); border-radius: 4px;
+}
+.q-step { display: flex; align-items: center; gap: 6px; }
+.q-btn, .q-go {
+  height: 42px; padding: 0 10px; font-size: 17px; line-height: 1; color: #fff; cursor: pointer;
+  background: linear-gradient(180deg, var(--win-1), var(--win-4)); border: 2px solid var(--win-edge); border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--win-ink); touch-action: manipulation; -webkit-user-select: none;
+}
+.q-btn { width: 46px; font-size: 26px; padding: 0; }
+.q-go { min-width: 84px; margin-left: auto; }
+.q-btn.press, .q-go.press { background: linear-gradient(180deg, #7080f0, var(--win-3)); }
+.q-btn.disabled, .q-go.disabled { opacity: 0.4; }
+.q-n { min-width: 40px; text-align: center; font-size: 22px; color: #fff; font-variant-numeric: tabular-nums; }
+.q-total { flex: 1; text-align: right; color: var(--gold); font-size: 16px; white-space: nowrap; }
+.q-total.bad { color: var(--danger); font-size: 14px; }
+.qtybar.bare { justify-content: center; background: none; border: 0; padding: 0; }
+
+.scrim {
+  position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 24, 0.55); border-radius: 4px;
+}
+.popmenu { width: min(280px, 88%); padding: 10px 8px; animation: winOpen 0.1s steps(2, end); }
+.pm-title { font-size: 18px; color: #fff; text-align: center; padding: 2px 0 4px; letter-spacing: 0.5px; }
+.pm-title small { color: var(--muted); font-size: 14px; }
+.pm-sub { text-align: center; color: var(--muted); font-size: 13px; padding-bottom: 6px; }
+.pm-qty { padding: 2px 0 8px; }
+.pm-list .item { min-height: 42px; }

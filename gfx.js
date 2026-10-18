@@ -15,14 +15,63 @@
       this.canvas = document.getElementById('screen');
       this.ctx = this.canvas.getContext('2d');
       this.resize();
-      window.addEventListener('resize', () => this.resize());
-      window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 200));
+      // resize can fire in bursts on iOS (toolbars, rotation); coalesce to one per frame
+      let queued = false;
+      const soon = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; this.pin(); this.resize(); }); };
+      window.addEventListener('resize', soon);
+      window.addEventListener('orientationchange', () => { soon(); setTimeout(soon, 250); setTimeout(soon, 600); });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', soon);
+        window.visualViewport.addEventListener('scroll', () => this.pin());
+      }
+      this.guardScroll();
+    },
+
+    /* The page must never move. On iPhone (especially in landscape) a stray vertical
+       drag or a toolbar change can nudge the whole document up, which slides the game
+       off-screen and exposes the black page behind it until the phone is rotated.
+       We pin everything back to 0,0 and refuse page-level drags. */
+    pin() {
+      if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+      const se = document.scrollingElement;
+      if (se && (se.scrollTop || se.scrollLeft)) { se.scrollTop = 0; se.scrollLeft = 0; }
+      for (const el of [document.body, document.getElementById('game')]) {
+        if (el && (el.scrollTop || el.scrollLeft)) { el.scrollTop = 0; el.scrollLeft = 0; }
+      }
+    },
+    guardScroll() {
+      const SCROLLERS = '.scroll, .b-list, .menu-body, .b-results';
+      window.addEventListener('scroll', () => this.pin(), { passive: true });
+      // overflow:hidden boxes can still be scrolled by focus or selection; snap the layers back
+      document.addEventListener('scroll', (e) => {
+        const t = e.target;
+        if (t && t.nodeType === 1 && !t.matches(SCROLLERS)) { t.scrollTop = 0; t.scrollLeft = 0; }
+      }, true);
+      let y0 = 0;
+      document.addEventListener('touchstart', (e) => { if (e.touches[0]) y0 = e.touches[0].clientY; }, { passive: true });
+      document.addEventListener('touchmove', (e) => {
+        const t = e.target;
+        if (!t || !t.closest) return;
+        if (t.closest('input[type="range"]')) return;
+        const sc = t.closest(SCROLLERS);
+        if (sc && sc.scrollHeight > sc.clientHeight + 1) {
+          // let real lists scroll, but never hand the drag to the page at either end
+          const dy = e.touches[0].clientY - y0;
+          const atTop = sc.scrollTop <= 0, atEnd = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
+          if ((dy > 0 && atTop) || (dy < 0 && atEnd)) e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+      }, { passive: false });
     },
 
     // Target roughly 208 "game pixels" across the shorter screen side.
     resize() {
       const dpr = window.devicePixelRatio || 1;
       const cw = window.innerWidth, ch = window.innerHeight;
+      if (cw === this._cw && ch === this._ch && dpr === this._dpr) return; // nothing changed
+      this._cw = cw; this._ch = ch; this._dpr = dpr;
+      document.documentElement.style.setProperty('--app-h', ch + 'px');
       const devW = Math.round(cw * dpr), devH = Math.round(ch * dpr);
       const short = Math.min(devW, devH);
       const scale = Math.max(1, Math.round(short / 208));

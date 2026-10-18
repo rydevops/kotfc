@@ -46,6 +46,81 @@
       </div></div>`;
   }
 
+  /* ---------- quantity stepper: [-] 3 [+]   total   [Go] ----------
+     Used by the shops (Buy / Sell) and the discard prompt. Press and hold
+     to repeat. q.set({min,max,qty,total,ok,goText}) redraws it. */
+  function holdTap(el, fn) {
+    let t = null, iv = null;
+    const stop = () => { clearTimeout(t); clearInterval(iv); t = iv = null; el.classList.remove('press'); };
+    el.addEventListener('pointerdown', (e) => {
+      e.stopPropagation(); e.preventDefault();
+      el.classList.add('press'); fn();
+      t = setTimeout(() => { iv = setInterval(fn, 80); }, 380);
+    });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(ev, (e) => { e.stopPropagation(); stop(); });
+    el.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); });
+  }
+  function makeQty(opts = {}) {
+    const el = U.el('div', 'qtybar' + (opts.bare ? ' bare' : ''));
+    el.innerHTML = `<div class="q-step"><button class="q-btn q-minus" aria-label="Fewer">−</button><span class="q-n">1</span><button class="q-btn q-plus" aria-label="More">+</button></div>` +
+      (opts.bare ? '' : `<span class="q-total"></span><button class="q-go tap">${opts.goLabel || 'OK'}</button>`);
+    const q = { el, min: 1, max: 1, qty: 1, ok: true };
+    const n = $('.q-n', el), minus = $('.q-minus', el), plus = $('.q-plus', el), total = $('.q-total', el), go = $('.q-go', el);
+    q.draw = () => {
+      n.textContent = q.qty;
+      minus.classList.toggle('disabled', q.qty <= q.min);
+      plus.classList.toggle('disabled', q.qty >= q.max);
+      if (total) { total.textContent = q.total || ''; total.classList.toggle('bad', !q.ok); }
+      if (go) { go.classList.toggle('disabled', !q.ok); if (q.goText) go.textContent = q.goText; }
+    };
+    q.set = (o) => {
+      Object.assign(q, o);
+      q.max = Math.max(q.min, q.max);
+      q.qty = U.clamp(q.qty, q.min, q.max);
+      q.draw();
+    };
+    q.step = (d) => {
+      const v = U.clamp(q.qty + d, q.min, q.max);
+      if (v === q.qty) { G.audio.sfx('error'); return; }
+      q.qty = v; G.audio.sfx('cursor'); q.draw();
+    };
+    holdTap(minus, () => q.step(-1));
+    holdTap(plus, () => q.step(1));
+    if (go) G.ui.onTap(go, () => q.onGo && q.onGo());
+    return q;
+  }
+
+  /* ---------- a small pop-up menu over the pause menu ----------
+     popup(root, { title, qty: {max}, options: [{label,value,right,disabled}] })
+     resolves { value, qty } — value is null when cancelled. */
+  async function popup(root, { title, sub, qty, options, cancelIndex }) {
+    const scrim = U.el('div', 'scrim');
+    const pop = U.el('div', 'popmenu win');
+    pop.innerHTML = `<div class="pm-title">${title}</div>${sub ? `<div class="pm-sub">${sub}</div>` : ''}<div class="pm-qty"></div><div class="pm-list"></div>`;
+    scrim.appendChild(pop);
+    root.appendChild(scrim);
+    let q = null;
+    if (qty) {
+      q = makeQty({ bare: true });
+      q.set({ min: 1, max: qty.max, qty: 1 });
+      $('.pm-qty', pop).appendChild(q.el);
+    } else $('.pm-qty', pop).remove();
+    const listEl = $('.pm-list', pop);
+    pop.addEventListener('pointerdown', (e) => e.stopPropagation());
+    scrim.addEventListener('pointerdown', (e) => { if (e.target === scrim) { e.stopPropagation(); listEl._cancel && listEl._cancel(); } });
+    const v = await runList(listEl, options, {
+      cancel: null,
+      start: Math.max(0, options.findIndex((o) => !o.disabled)),
+      onKey: q ? (b) => { if (b === 'left') { q.step(-1); return true; } if (b === 'right') { q.step(1); return true; } return false; } : null,
+    });
+    const out = { value: v, qty: q ? q.qty : 1 };
+    scrim.remove();
+    return out;
+  }
+  const isGear = (it) => it.type === 'weapon' || it.type === 'armor' || it.type === 'charm';
+  const itemStats = (item) => (item.stats ? ' — ' + Object.entries(item.stats).map(([k, v]) => `${k.toUpperCase()}+${v}`).join(' ') + (item.who ? ` (${item.who.map((w) => G.data.chars[w].short).join(', ')})` : '') : '');
+  const describe = (id) => { const item = G.data.items[id]; return `<b>${U.esc(item.name)}</b> — ${U.esc(item.desc + itemStats(item))}`; };
+
   const menu = (G.menu = {
     async open() {
       const w = G.world;
@@ -116,39 +191,71 @@
     },
 
     async itemsView() {
+      let start = 0, root, body, desc;
+      const build = () => {
+        root = frame('Items', `◈ ${st().gold} gold`);
+        $('.menu-tabs', root).remove();
+        body = $('.menu-body', root); desc = $('.menu-desc', root);
+      };
+      build();
       for (;;) {
-        const root = frame('Items', `◈ ${st().gold} gold`);
-        const tabs = $('.menu-tabs', root);
-        tabs.remove();
-        const body = $('.menu-body', root);
-        const desc = $('.menu-desc', root);
         const ids = Object.keys(st().inv).filter((id) => G.game.count(id) > 0);
         const items = ids.map((id) => {
           const it = G.data.items[id];
           return { label: U.esc(it.name), value: id, right: '×' + G.game.count(id), cls: it.type !== 'use' ? 'gear' : '' };
         });
         st().keyItems.forEach((id) => items.push({ label: '⚿ ' + U.esc(G.data.items[id].name), value: 'key:' + id, cls: 'keyitem' }));
-        if (!items.length) { body.innerHTML = '<p class="empty">Your satchel is empty. Well — crumbs.</p>'; await runList(body, [{ label: 'Back', value: null }], { cancel: null }); return; }
-        const v = await runList(body, items, { cancel: null, onFocus: (it) => (desc.textContent = G.data.items[String(it.value).replace('key:', '')].desc) });
+        if (!items.length) { body.innerHTML = '<p class="empty">Your satchel is empty. Well, except for crumbs.</p>'; desc.textContent = ''; await runList(body, [{ label: 'Back', value: null }], { cancel: null }); return; }
+        start = U.clamp(start, 0, items.length - 1);
+        // tapping an item shows what it is; a second step (the pop-up) decides what to do with it
+        const v = await runList(body, items, {
+          cancel: null, start,
+          onFocus: (it, i) => { start = i; desc.innerHTML = describe(String(it.value).replace('key:', '')); },
+          onPick: (it, i) => {
+            start = i;
+            if (String(it.value).startsWith('key:')) { G.audio.sfx('cursor'); return; } // key items: just read them
+            body._end(it.value);
+          },
+        });
         if (v == null) return;
-        if (String(v).startsWith('key:')) continue;
-        const it = G.data.items[v];
-        if (it.type !== 'use' || it.battleOnly || it.target === 'none') { G.audio.sfx('error'); G.ui.toast(it.type === 'use' ? 'That can only be used in battle.' : 'Equip it from the Equip menu.'); continue; }
-        // choose who
+        const id = v, it = G.data.items[id], n = G.game.count(id);
+        const canUse = it.type === 'use' && !it.battleOnly && it.target !== 'none';
+        const options = [];
+        if (it.type === 'use') options.push({ label: 'Use', value: 'use', disabled: !canUse, right: canUse ? '' : 'battle only' });
+        else options.push({ label: 'Equip', value: 'equip', right: 'in Equip menu', disabled: true });
+        options.push({ label: 'Discard', value: 'discard' }, { label: 'Cancel', value: null });
+        const act = await popup(root, { title: `${U.esc(it.name)} <small>×${n}</small>`, options });
+        if (!act.value) continue;
+        if (act.value === 'discard') {
+          const d = await popup(root, {
+            title: `Discard ${U.esc(it.name)}?`, sub: n > 1 ? 'How many?' : 'It will be gone for good.',
+            qty: n > 1 ? { max: n } : null,
+            options: [{ label: 'Discard', value: 'yes' }, { label: 'Keep it', value: null }],
+          });
+          if (d.value !== 'yes') continue;
+          G.game.removeItem(id, d.qty);
+          G.audio.sfx('cancel');
+          G.ui.toast(`Discarded ${U.esc(it.name)}${d.qty > 1 ? ' ×' + d.qty : ''}.`);
+          build();
+          continue;
+        }
+        // use: choose who
         const r2 = frame('Use ' + it.name, 'On whom?');
         $('.menu-tabs', r2).remove();
         const who = await runList($('.menu-body', r2), st().party.map((m) => ({ label: memberCard(m, true), value: m })), { cancel: null });
-        if (!who) continue;
-        const s = G.game.stats(who), u = it.use;
-        let used = false;
-        if (u.revive && who.hp <= 0) { who.hp = Math.max(1, Math.round(s.hp * u.revive)); used = true; }
-        else if (who.hp > 0) {
-          if (u.heal && who.hp < s.hp) { who.hp = Math.min(s.hp, who.hp + u.heal); used = true; }
-          if (u.mp && who.mp < s.mp) { who.mp = Math.min(s.mp, who.mp + u.mp); used = true; }
-          if (u.cure) used = true;
+        if (who) {
+          const s = G.game.stats(who), u = it.use;
+          let used = false;
+          if (u.revive && who.hp <= 0) { who.hp = Math.max(1, Math.round(s.hp * u.revive)); used = true; }
+          else if (who.hp > 0) {
+            if (u.heal && who.hp < s.hp) { who.hp = Math.min(s.hp, who.hp + u.heal); used = true; }
+            if (u.mp && who.mp < s.mp) { who.mp = Math.min(s.mp, who.mp + u.mp); used = true; }
+            if (u.cure) used = true;
+          }
+          if (used) { G.game.removeItem(id, 1); G.audio.sfx('heal'); G.ui.toast(`${G.data.chars[who.id].short} used ${it.name}.`); }
+          else { G.audio.sfx('error'); G.ui.toast('It wouldn\'t do anything right now.'); }
         }
-        if (used) { G.game.removeItem(v, 1); G.audio.sfx('heal'); G.ui.toast(`${G.data.chars[who.id].short} used ${it.name}.`); }
-        else { G.audio.sfx('error'); G.ui.toast('It wouldn\'t do anything right now.'); }
+        build();
       }
     },
 
@@ -237,47 +344,101 @@
       }
       close();
     },
+    /* Tap an item to read about it, use [-] / [+] to pick how many, then press Buy. */
     async buy(sh) {
-      let start = 0;
+      const root = frame(sh.name, `◈ ${st().gold} gold`);
+      $('.menu-tabs', root).remove();
+      const body = $('.menu-body', root), desc = $('.menu-desc', root), sub = $('.menu-sub', root);
+      const q = makeQty({ goLabel: 'Buy' });
+      root.insertBefore(q.el, desc);
+      let idx = 0, shown = null;
+      const cur = () => sh.stock[idx];
+      const refreshBar = () => {
+        const id = cur(), it = G.data.items[id], gold = st().gold;
+        const room = 99 - G.game.count(id);
+        const afford = Math.floor(gold / it.price);
+        const max = Math.min(isGear(it) ? 1 : 99, room, afford);
+        const keep = shown === id ? q.qty : 1;
+        shown = id;
+        if (max < 1) q.set({ min: 1, max: 1, qty: 1, ok: false, total: room < 1 ? 'You carry the max' : 'Not enough gold', goText: 'Buy' });
+        else q.set({ min: 1, max, qty: keep, ok: true, total: `${it.price * Math.min(keep, max)}g`, goText: 'Buy' });
+      };
+      const totalNow = () => { const it = G.data.items[cur()]; if (q.ok) q.total = `${it.price * q.qty}g`; };
+      const origStep = q.step;
+      q.step = (d) => { origStep(d); totalNow(); q.draw(); };
+      let list;
+      const purchase = () => {
+        const id = cur(), it = G.data.items[id], n = q.qty, cost = it.price * n;
+        if (!q.ok || st().gold < cost) { G.audio.sfx('error'); return; }
+        st().gold -= cost;
+        G.game.addItem(id, n);
+        G.audio.sfx('buy');
+        G.ui.toast(`Bought ${U.esc(it.name)}${n > 1 ? ' ×' + n : ''}.`);
+        sub.textContent = `◈ ${st().gold} gold`;
+        shown = null;
+        list._end('refresh');
+      };
+      q.onGo = purchase;
       for (;;) {
-        const root = frame(sh.name + ' — Buy', `◈ ${st().gold} gold`);
-        $('.menu-tabs', root).remove();
-        const desc = $('.menu-desc', root);
+        const keepScroll = body.scrollTop;
         const items = sh.stock.map((id) => {
           const it = G.data.items[id];
           const own = G.game.count(id) + st().party.filter((m) => Object.values(m.equip).includes(id)).length;
-          return { label: `${U.esc(it.name)} <small class="own">own ${own}</small>`, value: id, right: it.price + 'g', disabled: it.price > st().gold };
+          return { label: `${U.esc(it.name)} <small class="own">own ${own}</small>`, value: id, right: it.price + 'g', cls: it.price > st().gold ? 'dim' : '' };
         });
-        const id = await runList($('.menu-body', root), items, {
-          cancel: null, start,
-          onFocus: (it) => {
-            const item = G.data.items[it.value];
-            let extra = '';
-            if (item.stats) extra = ' — ' + Object.entries(item.stats).map(([k, v]) => `${k.toUpperCase()}+${v}`).join(' ') + (item.who ? ` (${item.who.map((w) => G.data.chars[w].short).join(', ')})` : '');
-            desc.textContent = item.desc + extra;
-          },
+        const p = runList(body, items, {
+          cancel: null, start: idx,
+          onFocus: (it, i) => { idx = i; desc.innerHTML = describe(it.value); refreshBar(); },
+          onPick: () => G.audio.sfx('cursor'),
+          onKey: (b) => { if (b === 'left') { q.step(-1); return true; } if (b === 'right') { q.step(1); return true; } if (b === 'a') { purchase(); return true; } return false; },
         });
-        if (!id) return;
-        start = sh.stock.indexOf(id);
-        const it = G.data.items[id];
-        if (st().gold < it.price) { G.audio.sfx('error'); continue; }
-        st().gold -= it.price;
-        G.game.addItem(id, 1);
-        G.audio.sfx('buy');
-        G.ui.toast(`Bought ${U.esc(it.name)}.`);
+        list = body;
+        body.scrollTop = keepScroll;
+        const r = await p;
+        if (r !== 'refresh') return;
       }
     },
     async sell() {
-      for (;;) {
-        const root = frame('Sell', `◈ ${st().gold} gold`);
-        $('.menu-tabs', root).remove();
-        const ids = Object.keys(st().inv).filter((id) => G.game.count(id) > 0 && G.data.items[id].price > 0);
-        if (!ids.length) { G.ui.toast('Nothing to sell.'); return; }
-        const id = await runList($('.menu-body', root), ids.map((i) => ({ label: U.esc(G.data.items[i].name), value: i, right: `×${G.game.count(i)} · ${Math.floor(G.data.items[i].price / 2)}g` })), { cancel: null });
-        if (!id) return;
-        G.game.removeItem(id, 1);
-        st().gold += Math.floor(G.data.items[id].price / 2);
+      const root = frame('Sell', `◈ ${st().gold} gold`);
+      $('.menu-tabs', root).remove();
+      const body = $('.menu-body', root), desc = $('.menu-desc', root), sub = $('.menu-sub', root);
+      const q = makeQty({ goLabel: 'Sell' });
+      root.insertBefore(q.el, desc);
+      let id = null, idx = 0, shown = null;
+      const price = (i) => Math.floor(G.data.items[i].price / 2);
+      const refreshBar = () => {
+        const n = G.game.count(id), keep = shown === id ? q.qty : 1;
+        shown = id;
+        q.set({ min: 1, max: n, qty: keep, ok: n > 0, total: `+${price(id) * Math.min(keep, n)}g`, goText: 'Sell' });
+      };
+      const origStep = q.step;
+      q.step = (d) => { origStep(d); q.total = `+${price(id) * q.qty}g`; q.draw(); };
+      const sellNow = () => {
+        if (!id || !q.ok) { G.audio.sfx('error'); return; }
+        const n = q.qty;
+        G.game.removeItem(id, n);
+        st().gold += price(id) * n;
         G.audio.sfx('buy');
+        G.ui.toast(`Sold ${U.esc(G.data.items[id].name)}${n > 1 ? ' ×' + n : ''}.`);
+        sub.textContent = `◈ ${st().gold} gold`;
+        shown = null;
+        body._end('refresh');
+      };
+      q.onGo = sellNow;
+      for (;;) {
+        const ids = Object.keys(st().inv).filter((i) => G.game.count(i) > 0 && G.data.items[i].price > 0);
+        if (!ids.length) { G.ui.toast('Nothing to sell.'); return; }
+        idx = U.clamp(idx, 0, ids.length - 1);
+        const keepScroll = body.scrollTop;
+        const p = runList(body, ids.map((i) => ({ label: U.esc(G.data.items[i].name), value: i, right: `×${G.game.count(i)} · ${price(i)}g` })), {
+          cancel: null, start: idx,
+          onFocus: (it, k) => { idx = k; id = it.value; desc.innerHTML = describe(id) + ` <small class="own">(sells for ${price(id)}g each)</small>`; refreshBar(); },
+          onPick: () => G.audio.sfx('cursor'),
+          onKey: (b) => { if (b === 'left') { q.step(-1); return true; } if (b === 'right') { q.step(1); return true; } if (b === 'a') { sellNow(); return true; } return false; },
+        });
+        body.scrollTop = keepScroll;
+        const r = await p;
+        if (r !== 'refresh') return;
       }
     },
 
